@@ -10,6 +10,9 @@ captures/
 .cxx/
 .DS_Store
 
+# Cloudflare Pages 部署工具（wrangler）的快取
+.wrangler/
+
 # 簽章與機密：絕不進版控
 *.jks
 *.keystore
