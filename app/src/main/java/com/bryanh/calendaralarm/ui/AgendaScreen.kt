@@ -84,39 +84,9 @@ fun AgendaScreen(vm: MainViewModel, onMenu: () -> Unit) {
                     )
                 }
                 groups.forEach { (date, events) ->
-                    stickyHeader(key = "h$date") {
-                        Text(
-                            (if (date == today) "今天・" else "") + Fmt.dateWithDow(date),
-                            style = TypeTok.caption,
-                            color = if (date == today) Tok.primary else Tok.slate,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Tok.surface)
-                                .padding(horizontal = Tok.sMd, vertical = Tok.chipPadV)
-                                .semantics { heading() },
-                        )
-                    }
+                    stickyHeader(key = "h$date") { DateListHeader(date, today) }
                     items(events, key = { "${date}_${it.key}" }) { e ->
-                        val alarm = AlarmRules.isAlarmOn(e, alarmState)
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable(onClickLabel = "看行程內容") { vm.navigate(Screen.Detail(e.eventId, e.begin)) }
-                                .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(Modifier.width(Tok.sXxs).height(36.dp).clip(RoundedCornerShape(Tok.rXs)).background(Tok.eventColor(e.color)))
-                            Spacer(Modifier.width(Tok.sSm))
-                            Column(Modifier.weight(1f)) {
-                                Text(e.displayTitle, style = TypeTok.body, color = Tok.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(
-                                    if (e.allDay || e.startDate(zone) != e.endDate(zone)) Fmt.range(e.begin, e.end, e.allDay) else "${Fmt.time(e.begin)} – ${Fmt.time(e.end)}",
-                                    style = TypeTok.caption,
-                                    color = Tok.slate,
-                                )
-                            }
-                            if (alarm) AppIcon(R.drawable.ic_alarm, "有鬧鐘", Tok.ink, 18.dp)
-                        }
+                        EventListRow(e, AlarmRules.isAlarmOn(e, alarmState), zone) { vm.navigate(Screen.Detail(e.eventId, e.begin)) }
                     }
                 }
                 item(key = "end") {
@@ -136,5 +106,47 @@ fun AgendaScreen(vm: MainViewModel, onMenu: () -> Unit) {
             }
         }
         Fab(onClick = { vm.navigate(Screen.Edit(null, null)) }, modifier = Modifier.align(Alignment.BottomEnd))
+    }
+}
+
+/** 依日期分組的清單裡，每天的標題列（捲動時黏在上面）。行程清單與搜尋結果共用。 */
+@Composable
+fun DateListHeader(date: LocalDate, today: LocalDate) {
+    Text(
+        (if (date == today) "今天・" else "") + Fmt.dateWithDow(date),
+        style = TypeTok.caption,
+        color = if (date == today) Tok.primary else Tok.slate,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Tok.surface)
+            .padding(horizontal = Tok.sMd, vertical = Tok.chipPadV)
+            .semantics { heading() },
+    )
+}
+
+/** 清單裡的一筆行程：色條、標題、時間（搜尋結果再加地點）、鬧鐘圖示；點了看內容。 */
+@Composable
+fun EventListRow(e: EventInstance, alarm: Boolean, zone: ZoneId, showLocation: Boolean = false, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = "看行程內容", onClick = onClick)
+            .padding(horizontal = Tok.sMd, vertical = Tok.sSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.width(Tok.sXxs).height(36.dp).clip(RoundedCornerShape(Tok.rXs)).background(Tok.eventColor(e.color)))
+        Spacer(Modifier.width(Tok.sSm))
+        Column(Modifier.weight(1f)) {
+            Text(e.displayTitle, style = TypeTok.body, color = Tok.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                if (e.allDay || e.startDate(zone) != e.endDate(zone)) Fmt.range(e.begin, e.end, e.allDay) else "${Fmt.time(e.begin)} – ${Fmt.time(e.end)}",
+                style = TypeTok.caption,
+                color = Tok.slate,
+            )
+            if (showLocation && e.location.isNotBlank()) {
+                Text(e.location, style = TypeTok.caption, color = Tok.slate, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        if (alarm) AppIcon(R.drawable.ic_alarm, "有鬧鐘", Tok.ink, 18.dp)
     }
 }

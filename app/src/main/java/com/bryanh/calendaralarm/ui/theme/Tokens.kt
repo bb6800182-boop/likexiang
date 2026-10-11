@@ -7,7 +7,8 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -65,30 +66,85 @@ object Tok {
     val ringSnoozeH = 44.dp
     val ringDismissH = 52.dp
 
-    /** 行程色塊＝Google 月曆行程色以 24% 不透明度疊在白底上，文字一律 charcoal（DESIGN.md「行程色塊」）。 */
-    private const val EVENT_TINT = 0.24f
-    fun eventTint(argb: Int): Color = Color(googleColor(argb)).copy(alpha = EVENT_TINT).compositeOver(canvas)
-    fun eventColor(argb: Int): Color = Color(googleColor(argb)).copy(alpha = 1f)
+    /**
+     * 行程顏色（DESIGN.md「行程色塊」）：照 Google 月曆小工具的畫法，Google 現在的色票在 OKLab 加兩成白，
+     * 鮮明但不刺眼（跟使用者截圖量到的 Google 顏色幾乎一樣）。色塊、色點、色條都用這個顏色。
+     */
+    fun eventColor(argb: Int): Color = lerp(Color(googleColor(argb)).copy(alpha = 1f), Color.White, LIGHTEN)
 
     /**
-     * Google 帳號的 11 種行程顏色，手機的日曆資料庫裡還是舊色票（例如石墨黑存成淺灰 #E1E1E1），
-     * Google 月曆畫的是新色票；顯示時換成新色票，才跟 Google 月曆看到的一樣。其他顏色原樣。
+     * 色塊上的字色，也照 Google 月曆小工具：底色不太亮用白字，亮的（黃、淺綠、紅鶴…）用同色系的深色字。
+     * 中間色上的白字對比約 2.6～4:1，低於 WCAG AA：使用者看過對照圖後選擇跟 Google 一樣（DESIGN.md 記為例外）。
      */
-    private val GOOGLE_EVENT_COLORS = mapOf(
-        0xFFA4BDFC.toInt() to 0xFF7986CB.toInt(), // 薰衣草色
-        0xFF7AE7BF.toInt() to 0xFF33B679.toInt(), // 鼠尾草綠
-        0xFFDBADFF.toInt() to 0xFF8E24AA.toInt(), // 葡萄紫
-        0xFFFF887C.toInt() to 0xFFE67C73.toInt(), // 紅鶴色
-        0xFFFBD75B.toInt() to 0xFFF6BF26.toInt(), // 香蕉黃
-        0xFFFFB878.toInt() to 0xFFF4511E.toInt(), // 橙橘色
-        0xFF46D6DB.toInt() to 0xFF039BE5.toInt(), // 孔雀藍
-        0xFFE1E1E1.toInt() to 0xFF616161.toInt(), // 石墨黑
-        0xFF5484ED.toInt() to 0xFF3F51B5.toInt(), // 藍莓色
-        0xFF51B749.toInt() to 0xFF0B8043.toInt(), // 羅勒綠
-        0xFFDC2127.toInt() to 0xFFD50000.toInt(), // 番茄紅
+    fun onEventColor(argb: Int): Color {
+        val bg = eventColor(argb)
+        return if (bg.luminance() < WHITE_TEXT_BELOW) onPrimary else lerp(bg, Color.Black, DARK_TEXT)
+    }
+
+    /** WCAG 對比值（1～21）。 */
+    fun contrast(a: Color, b: Color): Float {
+        val la = a.luminance()
+        val lb = b.luminance()
+        return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+    }
+
+    /** 加多少白（OKLab）。 */
+    private const val LIGHTEN = 0.2f
+
+    /** 底色的相對亮度低於這個值用白字（Google 小工具在 0.35 用白字、0.42 用深色字）。 */
+    private const val WHITE_TEXT_BELOW = 0.4f
+
+    /** 深色字＝底色往黑走多少（OKLab）：同色系，對比 8:1 以上。 */
+    private const val DARK_TEXT = 0.85f
+
+    /**
+     * 手機的日曆資料庫裡，Google 帳號的行程顏色（11 種）與日曆顏色（24 種）都還是舊色票
+     * （例如石墨黑存成淺灰 #E1E1E1），Google 月曆畫的是同名的新色票；顯示時換成新色票，才跟 Google 月曆看到的一樣。
+     * 舊色票與名稱的對應見 Google Calendar API 的 colors；不在表裡的顏色（自訂色）原樣。
+     */
+    private val GOOGLE_COLORS = mapOf(
+        // 行程顏色
+        0xFFA4BDFC.toInt() to 0xFF7986CB.toInt(), // Lavender 薰衣草色
+        0xFF7AE7BF.toInt() to 0xFF33B679.toInt(), // Sage 鼠尾草綠
+        0xFFDBADFF.toInt() to 0xFF8E24AA.toInt(), // Grape 葡萄紫
+        0xFFFF887C.toInt() to 0xFFE67C73.toInt(), // Flamingo 紅鶴色
+        0xFFFBD75B.toInt() to 0xFFF6BF26.toInt(), // Banana 香蕉黃
+        0xFFFFB878.toInt() to 0xFFF4511E.toInt(), // Tangerine 橙橘色
+        0xFF46D6DB.toInt() to 0xFF039BE5.toInt(), // Peacock 孔雀藍
+        0xFFE1E1E1.toInt() to 0xFF616161.toInt(), // Graphite 石墨黑
+        0xFF5484ED.toInt() to 0xFF3F51B5.toInt(), // Blueberry 藍莓色
+        0xFF51B749.toInt() to 0xFF0B8043.toInt(), // Basil 羅勒綠
+        0xFFDC2127.toInt() to 0xFFD50000.toInt(), // Tomato 番茄紅
+        // 日曆顏色
+        0xFFAC725E.toInt() to 0xFF795548.toInt(), // Cocoa
+        0xFFD06B64.toInt() to 0xFFE67C73.toInt(), // Flamingo
+        0xFFF83A22.toInt() to 0xFFD50000.toInt(), // Tomato
+        0xFFFA573C.toInt() to 0xFFF4511E.toInt(), // Tangerine
+        0xFFFF7537.toInt() to 0xFFEF6C00.toInt(), // Pumpkin
+        0xFFFFAD46.toInt() to 0xFFF09300.toInt(), // Mango
+        // 名稱對照表寫 #42D692 是尤加利、#16A765 是羅勒綠，但使用者手機上 Google 月曆把 #16A765 的日曆（國定假日）
+        // 畫成尤加利樹綠（截圖量到的顏色完全吻合）；照實際顯示對調。#42D692 沒有實例可對照，跟著對調。
+        0xFF42D692.toInt() to 0xFF0B8043.toInt(), // Basil
+        0xFF16A765.toInt() to 0xFF009688.toInt(), // Eucalyptus
+        0xFF7BD148.toInt() to 0xFF7CB342.toInt(), // Pistachio
+        0xFFB3DC6C.toInt() to 0xFFC0CA33.toInt(), // Avocado
+        0xFFFBE983.toInt() to 0xFFE4C441.toInt(), // Citron
+        0xFFFAD165.toInt() to 0xFFF6BF26.toInt(), // Banana
+        0xFF92E1C0.toInt() to 0xFF33B679.toInt(), // Sage
+        0xFF9FE1E7.toInt() to 0xFF039BE5.toInt(), // Peacock
+        0xFF9FC6E7.toInt() to 0xFF4285F4.toInt(), // Cobalt
+        0xFF4986E7.toInt() to 0xFF3F51B5.toInt(), // Blueberry
+        0xFF9A9CFF.toInt() to 0xFF7986CB.toInt(), // Lavender
+        0xFFB99AFF.toInt() to 0xFFB39DDB.toInt(), // Wisteria
+        0xFFC2C2C2.toInt() to 0xFF616161.toInt(), // Graphite
+        0xFFCABDBF.toInt() to 0xFFA79B8E.toInt(), // Birch
+        0xFFCCA6AC.toInt() to 0xFFAD1457.toInt(), // Radicchio
+        0xFFF691B2.toInt() to 0xFFD81B60.toInt(), // Cherry blossom
+        0xFFCD74E6.toInt() to 0xFF8E24AA.toInt(), // Grape
+        0xFFA47AE2.toInt() to 0xFF9E69AF.toInt(), // Amethyst
     )
 
-    private fun googleColor(argb: Int): Int = (argb or 0xFF000000.toInt()).let { GOOGLE_EVENT_COLORS[it] ?: it }
+    private fun googleColor(argb: Int): Int = (argb or 0xFF000000.toInt()).let { GOOGLE_COLORS[it] ?: it }
 }
 
 object TypeTok {

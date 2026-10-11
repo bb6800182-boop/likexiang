@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -722,10 +723,11 @@ private fun ValueText(text: String, label: String, modifier: Modifier, enabled: 
 /**
  * 照 Google 月曆編輯頁的無外框輸入列：沒有框，聚焦時底下一條重點色的線（DESIGN.md text-field）。
  * 用 Material 的 DecorationBox，提示字與讀屏行為跟一般輸入框一樣；左右不留內距，文字才跟其他列對齊。
+ * 新增／編輯頁與搜尋框共用。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlainField(
+internal fun PlainField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
@@ -736,6 +738,7 @@ private fun PlainField(
     isError: Boolean = false,
     imeAction: ImeAction = ImeAction.Default,
     capitalize: Boolean = false,
+    onImeAction: (() -> Unit)? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val colors = TextFieldDefaults.colors(
@@ -759,6 +762,7 @@ private fun PlainField(
             capitalization = if (capitalize) KeyboardCapitalization.Sentences else KeyboardCapitalization.None,
             imeAction = imeAction,
         ),
+        keyboardActions = if (onImeAction != null) KeyboardActions(onAny = { onImeAction() }) else KeyboardActions.Default,
         cursorBrush = SolidColor(if (isError) Tok.error else Tok.primary),
         interactionSource = interaction,
     ) { inner ->

@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter
 object Notifications {
     const val CH_RING = "alarm_ring"
     const val CH_MISSED = "alarm_missed"
+    const val CH_VOICE = "voice_added"
     private const val REQ_FULLSCREEN = 2001
     private const val REQ_DISMISS = 2002
     private const val REQ_SNOOZE = 2003
@@ -36,6 +37,11 @@ object Notifications {
         nm.createNotificationChannel(
             NotificationChannel(CH_MISSED, "錯過的鬧鐘", NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "鬧鐘響滿時間沒人理會、或無法顯示響鈴畫面時留下的提醒。"
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CH_VOICE, "語音新增", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "用語音建立行程後的確認，點了可以修改或刪除。"
             },
         )
     }

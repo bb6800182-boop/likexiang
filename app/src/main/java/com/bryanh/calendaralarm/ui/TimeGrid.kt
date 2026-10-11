@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -63,7 +62,6 @@ fun timeAxisWidth(): Dp {
         with(density) { measurer.measure("00:00", TypeTok.caption, maxLines = 1).size.width.toDp() } + Tok.sXs * 2
     }
 }
-private val EVENT_BAR_W = 3.dp
 private val EVENT_PAD_V = 3.dp
 
 /** 一欄（一天）裡排好位置的行程。startMin／endMin 從當天 00:00 起算。 */
@@ -205,13 +203,13 @@ private fun EventBlock(e: EventInstance, alarm: Boolean, ringLabel: String?, tit
     val desc = "${e.displayTitle}，${Fmt.time(e.begin)} 到 ${Fmt.time(e.end)}" +
         (if (e.location.isNotBlank()) "，${e.location}" else "") +
         (ringLabel?.let { "，$it" } ?: "")
-    Row(
+    val fg = Tok.onEventColor(e.color)
+    Box(
         modifier
             .clip(RoundedCornerShape(Tok.rSm))
-            .background(Tok.eventTint(e.color))
+            .background(Tok.eventColor(e.color))
             .semantics { contentDescription = desc },
     ) {
-        Box(Modifier.width(EVENT_BAR_W).fillMaxHeight().background(Tok.eventColor(e.color)))
         // 只畫放得下的整行：高度不夠時依序省略響鈴時間、行程時間，不會出現被切一半的字
         BoxWithConstraints(Modifier.padding(horizontal = Tok.sXxs + 2.dp, vertical = EVENT_PAD_V).clearAndSetSemantics {}) {
             val density = LocalDensity.current
@@ -221,23 +219,23 @@ private fun EventBlock(e: EventInstance, alarm: Boolean, ringLabel: String?, tit
             val showRing = maxHeight >= titleH + lineH * 2
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(e.displayTitle, style = titleStyle, color = Tok.charcoal, maxLines = 1, overflow = TextOverflow.Clip, modifier = Modifier.weight(1f, fill = false))
+                    Text(e.displayTitle, style = titleStyle, color = fg, maxLines = 1, overflow = TextOverflow.Clip, modifier = Modifier.weight(1f, fill = false))
                     if (alarm) {
                         Spacer(Modifier.width(Tok.sXxs))
-                        AppIcon(R.drawable.ic_alarm, null, Tok.charcoal, iconSize(titleStyle))
+                        AppIcon(R.drawable.ic_alarm, null, fg, iconSize(titleStyle))
                     }
                 }
                 if (showTime) {
                     Text(
                         "${Fmt.time(e.begin)}–${Fmt.time(e.end)}" + if (e.location.isNotBlank()) "・${e.location}" else "",
                         style = lineStyle,
-                        color = Tok.charcoal,
+                        color = fg,
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
                     )
                 }
                 if (ringLabel != null && showRing) {
-                    Text(ringLabel, style = lineStyle, color = Tok.charcoal, maxLines = 1, overflow = TextOverflow.Clip)
+                    Text(ringLabel, style = lineStyle, color = fg, maxLines = 1, overflow = TextOverflow.Clip)
                 }
             }
         }

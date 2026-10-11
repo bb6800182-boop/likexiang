@@ -7,6 +7,14 @@
         <item name="android:windowLightNavigationBar">true</item>
     </style>
 
+    <!-- 語音新增：透明、沒有畫面，只露出系統的語音輸入 -->
+    <style name="Theme.CalendarAlarm.Voice" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
     <style name="Theme.CalendarAlarm.Ring" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/ring_bg</item>
         <item name="android:windowLightStatusBar">false</item>

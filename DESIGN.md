@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: calendar-alarm-warm
-description: "曆刻響 App 的設計系統，以 Notion 的暖白紙感為基底（2026-10-11 選定介面範例 C「溫暖色塊」）。暖白底、炭灰字、單一紫色重點；行程沿用 Google 月曆原本的顏色，畫成柔和的淡色塊；響鈴畫面反轉成海軍藍底，是整套唯一的深色畫面。"
+description: "曆刻響 App 的設計系統，以 Notion 的暖白紙感為基底（2026-10-11 選定介面範例 C「溫暖色塊」）。暖白底、炭灰字、單一紫色重點；行程沿用 Google 月曆的顏色，照 Google 小工具的畫法鋪成色塊；響鈴畫面反轉成海軍藍底，是整套唯一的深色畫面。"
 
 colors:
   primary: "#5645d4"
@@ -124,9 +124,13 @@ components:
     backgroundColor: "{colors.today-tint}"
     textColor: "{colors.ink}"
     typography: "{typography.caption}"
+  fab-voice:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.full}"
   event-chip:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.charcoal}"
+    textColor: "{colors.ink}"
     typography: "{typography.chip}"
     rounded: "{rounded.xs}"
     padding: 0 4px
@@ -185,10 +189,10 @@ components:
 
 ## Colors
 
-- **行程色塊**：沿用 Google 月曆原本的行程顏色（Google 帳號的 11 種行程顏色在手機資料庫裡是舊色票，顯示時換成 Google 月曆現在的新色票），色塊＝該色 24% 疊在白底上，文字一律 `{colors.charcoal}`，確保任何顏色都過 WCAG AA。時間軸上的行程另加 3px 原色細條。`components.event-chip` 的 `{colors.surface}` 只是沒有顏色時的預設。
+- **行程色塊**：照 Google 月曆小工具的畫法：Google 現在的色票（手機資料庫裡的 11 種行程顏色與 24 種日曆顏色都還是舊色票，依名稱換成新色票；國定假日日曆的 #16A765 照 Google 實際顯示當尤加利樹綠）在 OKLab 加兩成白，鮮明但不刺眼。月曆格、時間軸、小工具的色塊，以及清單的色條、色點都用這個顏色。字：底色相對亮度低於 0.40 用白字（`{colors.on-primary}`），否則用同色系深色字（底色往黑 85%，對比 8:1 以上）。**這是全 App 唯一的對比例外**：中間色上的白字只有約 2.6～4:1，低於 WCAG AA；使用者看過對照圖後，選擇跟 Google 月曆一樣（2026-10-11）。`components.event-chip` 的顏色只是示意。
 - **鬧鐘**：App 裡一律用鬧鐘線條圖示（顏色跟著文字走）；⏰ 字元只出現在 Google 月曆的標題裡。鬧鐘設定卡用 `{colors.alarm-tint}`。
 - **響鈴畫面**：`{colors.ring-bg}` 海軍藍底、`{colors.ring-ink}` 白字，裝飾小圓點用五個 deco 色，關閉鍵用 `{colors.primary}`。
-- **次要文字**：白底上用 `{colors.slate}`；色塊或 `{colors.surface}` 上也用 `{colors.slate}`。`{colors.steel}` 只用在白底（非本月日期、輸入框外框與提示字）。
+- **次要文字**：白底與 `{colors.surface}` 上用 `{colors.slate}`；行程色塊上的時間、地點跟標題同一個字色。`{colors.steel}` 只用在白底（非本月日期、輸入框外框與提示字）。
 - **目前時間線**：日檢視的「現在」橫線用 `{colors.primary}`，跟今天標記同一個語意。
 - **今天**：日期用 `components.today-marker`（紫底白字圓形）。桌面的月曆小工具整頁一眼看過去不好找，今天那一格再整格鋪 `{colors.today-tint}`（重點色約 10% 疊在白底），格上的字照常用 `{colors.ink}`、`{colors.slate}`。
 - **錯誤訊息**：表單錯誤用 `{colors.error}`（白底對比 6.5:1），只用在錯誤，不當裝飾。
@@ -215,6 +219,7 @@ components:
 
 - `button-primary`：儲存、關閉鬧鐘等主要動作。
 - `button-outline`：頂部「今天」。
+- `fab` / `fab-voice`：右下角新增鍵；上方 48dp 的圓是語音新增（白底、`{colors.hairline-strong}` 細框、麥克風用 `{colors.primary}`，次要動作不加陰影）。小工具頂部的麥克風跟上下月箭頭一樣是線條圖示，只有「＋」用紫底；1×1 語音小工具整顆是紫底白色麥克風。
 - `today-marker`、`today-cell`：今天的日期圓形；月曆小工具裡今天那一格。
 - `option-chip` / `option-chip-selected`：提前時間、一般通知等單選。
 - `alarm-card`：新增／編輯與詳情頁裡的鬧鐘設定區。
@@ -228,3 +233,4 @@ components:
 - Do：同一語意只用同一個 token，主要動作永遠是 `{colors.primary}`。
 - Don't：不要在白底以外的地方用 `{colors.steel}` 當文字色。
 - Don't：不要加第二個重點色；行程顏色來自使用者的 Google 月曆，不算介面重點色。
+- Don't：行程色塊以外，文字對比不要低於 4.5:1（行程色塊的白字是唯一例外，見「行程色塊」）。

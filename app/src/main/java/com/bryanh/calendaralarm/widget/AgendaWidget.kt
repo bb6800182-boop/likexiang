@@ -33,7 +33,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
@@ -84,14 +83,8 @@ private fun AgendaContent(m: AgendaModel) {
                 modifier = GlanceModifier.defaultWeight().padding(start = 4.dp).clickable(actionStartActivity(Widgets.openApp(context))),
                 maxLines = 1,
             )
-            Box(
-                GlanceModifier.size(40.dp).clickable(actionStartActivity(Widgets.newEvent(context))).semantics { contentDescription = "新增行程" },
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(GlanceModifier.size(30.dp).cornerRadius(Tok.rFull).background(Widgets.color(Tok.primary)), contentAlignment = Alignment.Center) {
-                    Text("＋", style = TextStyle(color = Widgets.color(Tok.onPrimary), fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center))
-                }
-            }
+            WidgetIconButton(R.drawable.ic_mic, "用語音新增行程", actionStartActivity(Widgets.voice(context)))
+            WidgetIconButton(R.drawable.ic_plus, "新增行程", actionStartActivity(Widgets.newEvent(context)), primary = true)
         }
         when {
             !m.ok -> Empty("請先開啟${context.getString(R.string.app_name)}，允許讀取日曆")

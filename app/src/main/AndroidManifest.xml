@@ -89,6 +89,14 @@
             android:theme="@style/Theme.CalendarAlarm.Ring"
             android:turnScreenOn="true" />
 
+        <!-- 語音新增（EVT-07）：小工具與 App 裡的麥克風開這裡；不對外，透明、做完就關 -->
+        <activity
+            android:name=".voice.VoiceActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.CalendarAlarm.Voice" />
+
         <service
             android:name=".alarm.RingService"
             android:exported="false"
@@ -126,6 +134,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_agenda_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.VoiceWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_voice"
+            android:permission="android.permission.BIND_APPWIDGET">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_voice_info" />
         </receiver>
 
         <!-- exported=false 仍收得到系統廣播，但其他 App 無法偽造 -->

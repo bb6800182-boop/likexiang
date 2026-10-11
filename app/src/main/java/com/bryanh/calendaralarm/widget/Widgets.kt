@@ -3,14 +3,29 @@ package com.bryanh.calendaralarm.widget
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.glance.ColorFilter
+import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.action.Action
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.background
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.unit.ColorProvider
 import com.bryanh.calendaralarm.MainActivity
 import com.bryanh.calendaralarm.alarm.AlarmScheduler
+import com.bryanh.calendaralarm.ui.theme.Tok
+import com.bryanh.calendaralarm.voice.VoiceActivity
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -74,5 +89,24 @@ object Widgets {
 
     fun newEvent(context: Context): Intent = MainActivity.internalIntent(context, MainActivity.ACTION_NEW_EVENT)
 
+    /** 語音新增：透明的 VoiceActivity（不對外），做完回到桌面。 */
+    fun voice(context: Context): Intent = VoiceActivity.intent(context)
+
     fun color(c: Color): ColorProvider = ColorProvider(c)
+}
+
+/**
+ * 小工具頂部的圖示按鈕：40dp 見方、圖示 24dp 置中（跟 App 同一組圖示）。只用一個 Image，省 view。
+ * 用向量圖示、不用「＋」字：字級放大時字會偏離圓心。
+ */
+@Composable
+internal fun WidgetIconButton(@DrawableRes icon: Int, description: String, action: Action, primary: Boolean = false) {
+    Image(
+        provider = ImageProvider(icon),
+        contentDescription = description,
+        colorFilter = ColorFilter.tint(Widgets.color(if (primary) Tok.onPrimary else Tok.ink)),
+        modifier = GlanceModifier.size(40.dp).padding(8.dp).cornerRadius(Tok.rFull)
+            .then(if (primary) GlanceModifier.background(Widgets.color(Tok.primary)) else GlanceModifier)
+            .clickable(action),
+    )
 }

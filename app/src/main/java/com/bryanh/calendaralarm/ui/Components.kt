@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,13 +37,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -51,6 +55,7 @@ import com.bryanh.calendaralarm.data.CalendarInfo
 import com.bryanh.calendaralarm.ui.theme.Tok
 import com.bryanh.calendaralarm.ui.theme.TypeTok
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 
 @Composable
 fun AppIcon(@DrawableRes res: Int, contentDescription: String?, tint: Color = Tok.ink, size: Dp = 22.dp, modifier: Modifier = Modifier) {
@@ -140,6 +145,31 @@ fun OutlineButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         contentAlignment = Alignment.Center,
     ) {
         Text(text, style = TypeTok.bodySm, color = Tok.ink)
+    }
+}
+
+/**
+ * 「回到今天」：日曆圖示裡寫今天幾號（跟 Google 月曆一樣），比「今天」文字按鈕省位置，頂部才放得下搜尋鈕。
+ * 數字用固定大小，字放大時也待在框裡；讀屏唸按鈕上的說明。
+ */
+@Composable
+fun TodayButton(onClick: () -> Unit) {
+    val numberSize = with(LocalDensity.current) { 9.dp.toSp() }
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = "回到今天" },
+        contentAlignment = Alignment.Center,
+    ) {
+        AppIcon(R.drawable.ic_calendar, null, Tok.ink, 24.dp)
+        Text(
+            "${LocalDate.now().dayOfMonth}",
+            style = TypeTok.chip.copy(fontSize = numberSize, lineHeight = numberSize, fontWeight = FontWeight.SemiBold),
+            color = Tok.ink,
+            modifier = Modifier.offset(y = 3.dp).clearAndSetSemantics {},
+        )
     }
 }
 
@@ -241,21 +271,22 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** 行程色塊：沿用 Google 月曆行程色的淡色版，文字 charcoal。 */
+/** 行程色塊：Google 月曆的行程色整塊鋪滿，字色依底色自動選（白字或深色字）。 */
 @Composable
 fun EventChip(title: String, argb: Int, alarm: Boolean, modifier: Modifier = Modifier, style: androidx.compose.ui.text.TextStyle = TypeTok.chip) {
+    val fg = Tok.onEventColor(argb)
     Row(
         modifier
             .clip(RoundedCornerShape(Tok.rXs))
-            .background(Tok.eventTint(argb))
+            .background(Tok.eventColor(argb))
             .padding(horizontal = Tok.sXxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (alarm) {
-            AppIcon(R.drawable.ic_alarm, "有鬧鐘", Tok.charcoal, 10.dp)
+            AppIcon(R.drawable.ic_alarm, "有鬧鐘", fg, 10.dp)
             Spacer(Modifier.width(2.dp))
         }
-        Text(title, style = style, color = Tok.charcoal, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
+        Text(title, style = style, color = fg, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip)
     }
 }
 

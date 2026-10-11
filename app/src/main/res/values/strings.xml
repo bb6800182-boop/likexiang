@@ -5,4 +5,6 @@
     <string name="widget_month_desc">整個月的行程與農曆，點日期看當天</string>
     <string name="widget_agenda">行程清單</string>
     <string name="widget_agenda_desc">今天起的行程，有鬧鐘的標示 ⏰</string>
+    <string name="widget_voice">語音新增</string>
+    <string name="widget_voice_desc">按一下說出日期、時間和行程，直接加到月曆</string>
 </resources>

@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,6 +38,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -52,6 +55,7 @@ import com.bryanh.calendaralarm.ui.layout.WeekLayoutEngine
 import com.bryanh.calendaralarm.ui.layout.weekSpans
 import com.bryanh.calendaralarm.ui.theme.Tok
 import com.bryanh.calendaralarm.ui.theme.TypeTok
+import com.bryanh.calendaralarm.voice.VoiceActivity
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
@@ -134,6 +138,7 @@ fun HomeTopBar(vm: MainViewModel, title: String, subtitle: String?, mode: HomeMo
     Row(Modifier.fillMaxWidth().heightIn(min = Tok.topBarH), verticalAlignment = Alignment.CenterVertically) {
         IconBtn(R.drawable.ic_menu, "選單", onClick = onMenu)
         TitleBlock(title, subtitle, Modifier.weight(1f))
+        IconBtn(R.drawable.ic_search, "搜尋行程", onClick = { vm.openSearch() })
         Box {
             Row(
                 Modifier
@@ -167,7 +172,8 @@ fun HomeTopBar(vm: MainViewModel, title: String, subtitle: String?, mode: HomeMo
         } else {
             Spacer(Modifier.width(Tok.sXs))
         }
-        OutlineButton("今天", onClick = { vm.goToday() }, modifier = Modifier.padding(end = Tok.sSm))
+        TodayButton(onClick = { vm.goToday() })
+        Spacer(Modifier.width(Tok.sXxs))
     }
 }
 
@@ -319,20 +325,41 @@ private fun DayLabel(day: LocalDate, inMonth: Boolean, isToday: Boolean, lunar: 
     }
 }
 
-/** 右下角新增鍵：DESIGN.md 裡唯一有陰影的元件。 */
+/**
+ * 右下角新增鍵：DESIGN.md 裡唯一有陰影的元件。上方的麥克風是語音新增（fab-voice）：
+ * 次要動作，白底細框、不加陰影。
+ */
 @Composable
 fun Fab(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .padding(end = Tok.sMd, bottom = Tok.sLg)
-            .shadow(Tok.fabElevation, RoundedCornerShape(Tok.rXl))
-            .clip(RoundedCornerShape(Tok.rXl))
-            .background(Tok.primary)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = "新增行程" }
-            .padding(Tok.sMd),
-        contentAlignment = Alignment.Center,
+    val context = LocalContext.current
+    Column(
+        modifier.padding(end = Tok.sMd, bottom = Tok.sLg),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Tok.sSm),
     ) {
-        AppIcon(R.drawable.ic_plus, null, Tok.onPrimary, 24.dp)
+        Box(
+            Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(Tok.canvas)
+                .border(1.dp, Tok.hairlineStrong, CircleShape)
+                .clickable(role = Role.Button) { context.startActivity(VoiceActivity.intent(context)) }
+                .semantics { contentDescription = "用語音新增行程" },
+            contentAlignment = Alignment.Center,
+        ) {
+            AppIcon(R.drawable.ic_mic, null, Tok.primary, 24.dp)
+        }
+        Box(
+            Modifier
+                .shadow(Tok.fabElevation, RoundedCornerShape(Tok.rXl))
+                .clip(RoundedCornerShape(Tok.rXl))
+                .background(Tok.primary)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = "新增行程" }
+                .padding(Tok.sMd),
+            contentAlignment = Alignment.Center,
+        ) {
+            AppIcon(R.drawable.ic_plus, null, Tok.onPrimary, 24.dp)
+        }
     }
 }

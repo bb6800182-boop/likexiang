@@ -69,28 +69,40 @@ class CalendarRepository(private val context: Context) {
             ContentUris.appendId(it, from)
             ContentUris.appendId(it, to)
         }.build()
-        val proj = arrayOf(
-            Instances.EVENT_ID, Instances.BEGIN, Instances.END, Instances.TITLE, Instances.ALL_DAY,
-            Instances.CALENDAR_ID, Instances.DISPLAY_COLOR, Instances.EVENT_LOCATION,
-            Instances.SELF_ATTENDEE_STATUS, Instances.STATUS, Instances.RRULE, Instances.ORIGINAL_ID,
-        )
-        return queryOrNull(uri, proj, null, null, "${Instances.BEGIN} ASC") { c ->
-            EventInstance(
-                eventId = c.getLong(0),
-                begin = c.getLong(1),
-                end = c.getLong(2),
-                title = c.getString(3).orEmpty(),
-                allDay = c.getInt(4) == 1,
-                calendarId = c.getLong(5),
-                color = c.getInt(6),
-                location = c.getString(7).orEmpty(),
-                selfStatus = if (c.isNull(8)) Attendees.ATTENDEE_STATUS_NONE else c.getInt(8),
-                status = if (c.isNull(9)) Events.STATUS_TENTATIVE else c.getInt(9),
-                recurring = !c.getString(10).isNullOrBlank(),
-                originalId = if (c.isNull(11)) null else c.getLong(11),
-            )
-        }
+        return queryOrNull(uri, INSTANCE_PROJECTION, null, null, "${Instances.BEGIN} ASC", ::instanceOf)
     }
+
+    /**
+     * 搜尋某段時間內的行程（重複行程已展開）：用系統日曆的搜尋網址，比對標題、說明、地點（也會比對與會者）；
+     * 關鍵字用空白分開時每個都要符合。關鍵字先用 [SearchQuery.normalize] 整理，放進網址時由 appendPath 編碼。
+     * 讀不到回傳 null；顯示哪些日曆由呼叫端過濾。
+     */
+    fun searchInstances(query: String, from: Long, to: Long): List<EventInstance>? {
+        if (!hasReadPermission()) return null
+        val q = SearchQuery.normalize(query) ?: return emptyList()
+        if (to <= from) return emptyList()
+        val uri = Instances.CONTENT_SEARCH_URI.buildUpon().also {
+            ContentUris.appendId(it, from)
+            ContentUris.appendId(it, to)
+            it.appendPath(q)
+        }.build()
+        return queryOrNull(uri, INSTANCE_PROJECTION, null, null, "${Instances.BEGIN} ASC", ::instanceOf)
+    }
+
+    private fun instanceOf(c: Cursor) = EventInstance(
+        eventId = c.getLong(0),
+        begin = c.getLong(1),
+        end = c.getLong(2),
+        title = c.getString(3).orEmpty(),
+        allDay = c.getInt(4) == 1,
+        calendarId = c.getLong(5),
+        color = c.getInt(6),
+        location = c.getString(7).orEmpty(),
+        selfStatus = if (c.isNull(8)) Attendees.ATTENDEE_STATUS_NONE else c.getInt(8),
+        status = if (c.isNull(9)) Events.STATUS_TENTATIVE else c.getInt(9),
+        recurring = !c.getString(10).isNullOrBlank(),
+        originalId = if (c.isNull(11)) null else c.getLong(11),
+    )
 
     fun eventDetail(id: Long): EventDetail? {
         if (!hasReadPermission() || id <= 0) return null
@@ -328,6 +340,12 @@ class CalendarRepository(private val context: Context) {
     }
 
     companion object {
+        private val INSTANCE_PROJECTION = arrayOf(
+            Instances.EVENT_ID, Instances.BEGIN, Instances.END, Instances.TITLE, Instances.ALL_DAY,
+            Instances.CALENDAR_ID, Instances.DISPLAY_COLOR, Instances.EVENT_LOCATION,
+            Instances.SELF_ATTENDEE_STATUS, Instances.STATUS, Instances.RRULE, Instances.ORIGINAL_ID,
+        )
+
         private const val TAG = "CalendarRepo"
         const val MAX_TITLE = 200
         const val MAX_LOCATION = 200

@@ -92,6 +92,7 @@ fun AppRoot(vm: MainViewModel) {
                                 is Screen.Edit -> EditScreen(vm, top.eventId, top.presetStart, top.prefill)
                                 Screen.Alarms -> AlarmsScreen(vm)
                                 Screen.Settings -> SettingsScreen(vm)
+                                Screen.Search -> SearchScreen(vm)
                             }
                         }
                     }

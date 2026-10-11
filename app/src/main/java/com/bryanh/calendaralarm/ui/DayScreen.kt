@@ -78,7 +78,8 @@ fun DayScreen(vm: MainViewModel, date: LocalDate) {
                 actions = {
                     IconBtn(R.drawable.ic_chevron_left, "前一天", onClick = { go(date.minusDays(1)) })
                     IconBtn(R.drawable.ic_chevron_right, "後一天", onClick = { go(date.plusDays(1)) })
-                    OutlineButton("今天", onClick = { go(LocalDate.now()) }, modifier = Modifier.padding(end = Tok.sSm))
+                    TodayButton(onClick = { go(LocalDate.now()) })
+                    Spacer(Modifier.width(Tok.sXxs))
                 },
             )
             WeekStrip(date, vm, go)

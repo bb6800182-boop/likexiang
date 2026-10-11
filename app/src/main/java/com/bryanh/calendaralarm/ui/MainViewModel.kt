@@ -29,6 +29,7 @@ import com.bryanh.calendaralarm.data.EventDetail
 import com.bryanh.calendaralarm.data.EventDraft
 import com.bryanh.calendaralarm.data.EventInstance
 import com.bryanh.calendaralarm.data.Lunar
+import com.bryanh.calendaralarm.data.SearchQuery
 import com.bryanh.calendaralarm.data.Settings
 import com.bryanh.calendaralarm.data.SyncMode
 import com.bryanh.calendaralarm.data.alarmKey
@@ -59,7 +60,16 @@ sealed interface Screen {
     data class Edit(val eventId: Long?, val presetStart: LocalDateTime?, val prefill: Prefill? = null) : Screen
     data object Alarms : Screen
     data object Settings : Screen
+    data object Search : Screen
 }
+
+/** 搜尋畫面的狀態。query 是整理過、結果對應的關鍵字；error＝讀不到日曆。 */
+data class SearchState(
+    val query: String = "",
+    val results: List<EventInstance> = emptyList(),
+    val loading: Boolean = false,
+    val error: Boolean = false,
+)
 
 /** 首頁的檢視：月、行程清單、自訂天數（時間格）、自訂週數（月曆格）。日檢視是點進去的另一頁。 */
 enum class HomeMode { MONTH, AGENDA, DAYS, WEEKS }
@@ -152,6 +162,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var agendaJob: Job? = null
     private val _agenda = MutableStateFlow<AgendaData?>(null)
     val agenda: StateFlow<AgendaData?> = _agenda.asStateFlow()
+
+    private val _search = MutableStateFlow(SearchState())
+    val search: StateFlow<SearchState> = _search.asStateFlow()
+    private var searchJob: Job? = null
 
     private val _calendars = MutableStateFlow<List<CalendarInfo>>(emptyList())
     val calendars: StateFlow<List<CalendarInfo>> = _calendars.asStateFlow()
@@ -306,6 +320,46 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             if (_homeMode.value == HomeMode.AGENDA) loadAgenda()
             _calendars.value = withContext(Dispatchers.IO) { repo.calendars() }
             if (top is Screen.Alarms) loadUpcoming()
+            // 從搜尋結果點進去改了行程，回來時結果也是新的
+            if (top is Screen.Search && _search.value.query.isNotEmpty()) runSearch(_search.value.query)
+        }
+    }
+
+    // ── 搜尋 ──────────────────────────────────────────────
+    /** 打開搜尋畫面，從空白開始。 */
+    fun openSearch() {
+        searchJob?.cancel()
+        _search.value = SearchState()
+        navigate(Screen.Search)
+    }
+
+    /** 輸入框每次變動就呼叫；停 [SEARCH_DEBOUNCE_MS] 沒再打字才真的查，前一次還沒查完就取消。 */
+    fun search(raw: String) {
+        val q = SearchQuery.normalize(raw)
+        searchJob?.cancel()
+        if (q == null) {
+            _search.value = SearchState()
+            return
+        }
+        if (q == _search.value.query && !_search.value.loading && !_search.value.error) return
+        _search.update { it.copy(loading = true) }
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_MS)
+            runSearch(q)
+        }
+    }
+
+    /** 搜尋前後 [SearchQuery.YEARS] 年；只列顯示中的日曆。 */
+    private suspend fun runSearch(q: String) {
+        val s = settings.value
+        val today = LocalDate.now()
+        val from = startMillis(today.minusYears(SearchQuery.YEARS))
+        val to = startMillis(today.plusYears(SearchQuery.YEARS).plusDays(1))
+        val found = withContext(Dispatchers.IO) { repo.searchInstances(q, from, to) }
+        _search.value = if (found == null) {
+            SearchState(query = q, error = true)
+        } else {
+            SearchState(query = q, results = SearchQuery.nearest(visible(found, s), System.currentTimeMillis()))
         }
     }
 
@@ -636,5 +690,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         const val AGENDA_CHUNK_DAYS = 90L
         const val AGENDA_MAX_YEARS = 3L
         const val LOCATION_SUGGESTIONS = 5
+        const val SEARCH_DEBOUNCE_MS = 300L
     }
 }
