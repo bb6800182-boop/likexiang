@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">曆刻響</string>
+    <string name="widget_month">月曆</string>
+    <string name="widget_month_desc">整個月的行程與農曆，點日期看當天</string>
+    <string name="widget_agenda">行程清單</string>
+    <string name="widget_agenda_desc">今天起的行程，有鬧鐘的標示 ⏰</string>
+</resources>

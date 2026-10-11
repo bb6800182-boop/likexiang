@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 畫面全由 Compose 繪製，這裡只決定視窗底色與狀態列文字深淺 -->
+    <style name="Theme.CalendarAlarm" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/canvas</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <style name="Theme.CalendarAlarm.Ring" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ring_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

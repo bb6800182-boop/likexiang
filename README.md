@@ -1,0 +1,67 @@
+# 曆刻響
+
+取代手機上 Google 月曆的 Android 月曆 App。行程照樣存在你的 Google 月曆，電腦和手機兩邊同步；每筆行程可以單獨打開「鬧鐘提醒」，時間到會像鬧鐘一樣全螢幕響，直到你按掉為止。
+
+- 免費、開放原始碼（[MIT 授權](LICENSE)）。
+- 不要求網路權限，不收集任何資料；行程只透過手機系統的日曆資料庫讀寫，同步交給 Google 帳號本身。
+- 用 APK 安裝，沒有上架 Google Play：到[說明網站](https://likexiang.pages.dev)下載，安裝步驟與常見問題也在那裡。
+
+## 功能
+
+- **檢視**
+  - 月：整頁月曆格，每格直接看到行程色塊與農曆，跨日行程橫跨多格，放不下時顯示「+N」。
+  - 日：字大、行距寬鬆的時間軸，重疊的行程並排，有目前時間線；點空白時段直接新增。
+  - 自訂天數（2～7 天）與自訂週數（1～6 週）：一次看好幾天的時間軸，或格子更大的月曆格。
+  - 行程清單：依日期分組，可以一直往下捲。
+- **一天的開始時間**：時間軸從這裡畫起（預設 06:00，更早的行程照樣顯示），整天行程的鬧鐘也在這個時間響。
+- **新增與編輯**：照 Google 月曆的編輯頁設計，可選行程顏色、地點、說明、多個一般通知，以及鬧鐘開關與提前時間（準時到 24 小時前，也可以自訂）。
+- **鬧鐘**
+  - 鎖定時全螢幕響，走鬧鐘音量（靜音模式也響）並震動。
+  - 可以「稍後再響」5／10／15 分，或直接打開行程。
+  - 沒人理會時響滿設定的時間後自動停止，並留下「錯過的鬧鐘」通知；同時有多個鬧鐘會合併在同一個畫面。
+- **⏰ 同步**
+  - 在 App 打開鬧鐘，Google 月曆的標題會自動加上「⏰ 」；在電腦上加 ⏰ 的行程，手機也會響。
+  - 有其他與會者的會議只記在手機，不改到大家看到的標題。
+- **桌面小工具**：月曆（整個月、自訂天數或週數）與行程清單。
+- **鬧鐘清單**：列出未來 7 天會響的鬧鐘，可以單次略過。
+- **設定與首次精靈**：引導開好權限，並附「10 秒後試響」。
+
+## 從原始碼編譯
+
+需要 Android Studio（用它內附的 JDK 就可以），手機 Android 13 以上。
+
+1. 用 Android Studio 開啟這個資料夾（第一次會自動下載 Gradle 與相依套件）。
+2. 手機開啟「開發人員選項」與「USB 偵錯」，接上電腦。
+3. 編譯並安裝：
+   ```sh
+   ./gradlew assembleDebug
+   adb install -r --user 0 app/build/outputs/apk/debug/app-debug.apk
+   ```
+   `--user 0` 只裝在手機的主要使用者；不加的話，有工作資料夾或私人空間的手機會連那邊一起裝。
+   在 Windows 命令列編譯前，先把 `JAVA_HOME` 設成 Android Studio 內附的 `jbr` 資料夾。
+   專案放在 Windows 的 Dropbox 裡時，編譯輸出會改放到 `%LOCALAPPDATA%\calendar-alarm-build`（見 `build.gradle.kts`）。
+4. 打開 App，依精靈開好權限，再按「10 秒後試響」確認會響。
+
+正式版（release）要自己的簽章金鑰：在使用者的 `~/.gradle/gradle.properties`（不是專案資料夾）加上
+
+```properties
+calendarAlarm.storeFile=C:/Users/你的帳號/keys/calendar-alarm.jks
+calendarAlarm.storePassword=…
+calendarAlarm.keyAlias=…
+calendarAlarm.keyPassword=…
+```
+
+再執行 `./gradlew assembleRelease`。金鑰與密碼不要放進版控。
+
+## 需要的權限
+
+- **讀寫日曆**：讀取與新增 Google 月曆的行程。
+- **通知、全螢幕通知**：顯示響鈴畫面。
+- **鬧鐘與提醒**：準時觸發，安裝時自動授權。
+- **電池用量不受限制（建議）**：讓電腦上改的行程更快同步到鬧鐘。
+
+## 授權與聲明
+
+- 本專案以 [MIT 授權](LICENSE) 釋出。使用的開放原始碼元件（Android Jetpack、Kotlin 等，Apache 2.0；Protocol Buffers，BSD 3-Clause）的授權全文在 App 的「設定 › 關於 › 開放原始碼授權」。
+- Google、Google 日曆與 Android 是 Google LLC 的商標。本 App 是個人開發的獨立作品，與 Google 沒有關係，也沒有經過 Google 認可。
+- 設計系統見 [DESIGN.md](DESIGN.md)。

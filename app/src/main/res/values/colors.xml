@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 與 DESIGN.md 同名 token 對應 -->
+<resources>
+    <color name="canvas">#FFFFFFFF</color>
+    <color name="ring_bg">#FF0A1530</color>
+    <color name="ic_launcher_background">#FF5A5391</color>
+</resources>
