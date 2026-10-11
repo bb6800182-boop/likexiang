@@ -6,28 +6,28 @@
     android:viewportHeight="108">
     <!-- 曆刻響（北歐扁平）：月曆頁＋響著的鈴。只畫在 66dp 安全圓內；色票見 DESIGN.md「App 圖示」 -->
     <path
-        android:fillColor="#F5F1EA"
+        android:fillColor="#F4EFE6"
         android:pathData="M38,30H70A9,9 0 0,1 79,39V71A9,9 0 0,1 70,80H38A9,9 0 0,1 29,71V39A9,9 0 0,1 38,30Z" />
     <path
-        android:fillColor="#E59F7D"
+        android:fillColor="#D9785B"
         android:pathData="M29,44V39A9,9 0 0,1 38,30H70A9,9 0 0,1 79,39V44Z" />
     <path
         android:pathData="M41,26V34M67,26V34"
-        android:strokeColor="#F5F1EA"
+        android:strokeColor="#F4EFE6"
         android:strokeLineCap="round"
         android:strokeWidth="4.4" />
     <path
-        android:fillColor="#5A5391"
+        android:fillColor="#4F6D7A"
         android:pathData="M54,51.5C49.3,51.5 46,55.1 46,59.6V64.2L43.6,67.4C43.1,68.1 43.6,69 44.4,69H63.6C64.4,69 64.9,68.1 64.4,67.4L62,64.2V59.6C62,55.1 58.7,51.5 54,51.5Z" />
     <path
-        android:fillColor="#5A5391"
+        android:fillColor="#4F6D7A"
         android:pathData="M52.2,51.6A1.8,1.8 0 1,1 55.8,51.6Z" />
     <path
-        android:fillColor="#5A5391"
+        android:fillColor="#4F6D7A"
         android:pathData="M51,70.6A3,3 0 0,0 57,70.6Z" />
     <path
         android:pathData="M40.2,55.2Q37.4,60 40.2,64.8M67.8,55.2Q70.6,60 67.8,64.8"
-        android:strokeColor="#E59F7D"
+        android:strokeColor="#D9785B"
         android:strokeLineCap="round"
         android:strokeWidth="2.4" />
 </vector>

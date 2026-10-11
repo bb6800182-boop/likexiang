@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -207,7 +208,7 @@ fun SettingsScreen(vm: MainViewModel) {
                     Text("行程存在你的 Google 月曆；這支 App 不連網路，資料不會離開手機。免費、開放原始碼（MIT 授權）。", style = TypeTok.caption, color = Tok.slate)
                 }
                 CardDivider()
-                SettingRow("開放原始碼授權", "MIT・Apache 2.0") { dialog = SettingsDialog.LICENSES }
+                SettingRow("開放原始碼授權", "MIT・Apache 2.0・BSD") { dialog = SettingsDialog.LICENSES }
             }
             Spacer(Modifier.size(Tok.sXxl))
         }
@@ -314,10 +315,10 @@ private fun SettingRow(title: String, value: String, caption: String? = null, on
 /** 開放原始碼授權：本 App（MIT）與用到的套件（Apache 2.0、BSD 3-Clause），條文從 res/raw/licenses.txt 讀。 */
 @Composable
 private fun LicensesDialog(onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val text by produceState("") {
+    val resources = LocalResources.current
+    val text by produceState("", resources) {
         value = withContext(Dispatchers.IO) {
-            runCatching { context.resources.openRawResource(R.raw.licenses).bufferedReader().use { it.readText() } }.getOrDefault("")
+            runCatching { resources.openRawResource(R.raw.licenses).bufferedReader().use { it.readText() } }.getOrDefault("")
         }
     }
     AlertDialog(
