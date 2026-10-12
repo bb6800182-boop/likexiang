@@ -1,4 +1,4 @@
-# 版本跟 已經編譯成功的「晚點回」專案一致（AGP 9 內建 Kotlin，不另外套 kotlin-android 外掛）。
+# 版本跟已經編譯成功的「晚點回」專案一致（AGP 9 內建 Kotlin，不另外套 kotlin-android 外掛）。
 # Android Studio 提示可升級時再升，升完跑一次單元測試與實機測試。
 [versions]
 agp = "9.0.1"
