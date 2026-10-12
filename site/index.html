@@ -8,8 +8,9 @@
 <meta property="og:title" content="曆刻響｜會響的月曆 App">
 <meta property="og:description" content="取代 Google 月曆的 Android 月曆 App，重要的行程響到你按掉為止。免費、開放原始碼。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likexiang.pages.dev/">
-<meta property="og:image" content="https://likexiang.pages.dev/icon-512.png">
+<meta property="og:url" content="https://c520.pages.dev/likexiang/">
+<meta property="og:image" content="https://c520.pages.dev/likexiang/icon-512.png">
+<link rel="canonical" href="https://c520.pages.dev/likexiang/">
 <meta name="theme-color" content="#5645d4">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='18 18 72 72'%3E%3CclipPath id='c'%3E%3Crect x='18' y='18' width='72' height='72' rx='17'/%3E%3C/clipPath%3E%3Cg clip-path='url(%23c)'%3E%3Crect width='108' height='108' fill='%234F6D7A'/%3E%3Cpath d='M38,30H70A9,9 0 0,1 79,39V71A9,9 0 0,1 70,80H38A9,9 0 0,1 29,71V39A9,9 0 0,1 38,30Z' fill='%23F4EFE6'/%3E%3Cpath d='M29,44V39A9,9 0 0,1 38,30H70A9,9 0 0,1 79,39V44Z' fill='%23D9785B'/%3E%3Cpath d='M41,26V34M67,26V34' stroke='%23F4EFE6' stroke-width='4.4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M54,51.5C49.3,51.5 46,55.1 46,59.6V64.2L43.6,67.4C43.1,68.1 43.6,69 44.4,69H63.6C64.4,69 64.9,68.1 64.4,67.4L62,64.2V59.6C62,55.1 58.7,51.5 54,51.5Z' fill='%234F6D7A'/%3E%3Cpath d='M52.2,51.6A1.8,1.8 0 1,1 55.8,51.6Z' fill='%234F6D7A'/%3E%3Cpath d='M51,70.6A3,3 0 0,0 57,70.6Z' fill='%234F6D7A'/%3E%3Cpath d='M40.2,55.2Q37.4,60 40.2,64.8M67.8,55.2Q70.6,60 67.8,64.8' stroke='%23D9785B' stroke-width='2.4' stroke-linecap='round' fill='none'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -57,6 +58,9 @@ a { color: var(--primary); }
 .logo { width: 36px; height: 36px; flex: none; }
 .brand { font: var(--title-lg); letter-spacing: -0.5px; }
 .top .btn { margin-left: auto; min-height: 40px; padding: 0 var(--s-md); font: var(--body-sm); font-weight: 600; }
+/* 回 C520 首頁：用 C520 首頁的字樣（Georgia、等高數字） */
+.home { display: inline-flex; align-items: center; min-height: 44px; padding-right: var(--s-sm); border-right: 1px solid var(--hairline-strong); font: 500 17px/1 Georgia, serif; font-variant-numeric: lining-nums; color: var(--slate); text-decoration: none; }
+.home:hover { color: var(--ink); }
 
 section { padding-block: var(--s-xxl); }
 section + section { border-top: 1px solid var(--hairline); }
@@ -207,6 +211,7 @@ section.band { border-top: 0; background: var(--primary); color: var(--on-primar
 </head>
 <body>
 <header class="wrap top">
+  <a class="home" href="/" aria-label="回 C520 首頁">C520</a>
   <svg class="logo" viewBox="18 18 72 72" aria-hidden="true"><defs><clipPath id="lc"><rect x="18" y="18" width="72" height="72" rx="17"/></clipPath></defs><g clip-path="url(#lc)"><rect width="108" height="108" fill="#4F6D7A"/><path d="M38,30H70A9,9 0 0,1 79,39V71A9,9 0 0,1 70,80H38A9,9 0 0,1 29,71V39A9,9 0 0,1 38,30Z" fill="#F4EFE6"/><path d="M29,44V39A9,9 0 0,1 38,30H70A9,9 0 0,1 79,39V44Z" fill="#D9785B"/><path d="M41,26V34M67,26V34" stroke="#F4EFE6" stroke-width="4.4" stroke-linecap="round" fill="none"/><path d="M54,51.5C49.3,51.5 46,55.1 46,59.6V64.2L43.6,67.4C43.1,68.1 43.6,69 44.4,69H63.6C64.4,69 64.9,68.1 64.4,67.4L62,64.2V59.6C62,55.1 58.7,51.5 54,51.5Z" fill="#4F6D7A"/><path d="M52.2,51.6A1.8,1.8 0 1,1 55.8,51.6Z" fill="#4F6D7A"/><path d="M51,70.6A3,3 0 0,0 57,70.6Z" fill="#4F6D7A"/><path d="M40.2,55.2Q37.4,60 40.2,64.8M67.8,55.2Q70.6,60 67.8,64.8" stroke="#D9785B" stroke-width="2.4" stroke-linecap="round" fill="none"/></g></svg><span class="brand">曆刻響</span>
   <a class="btn" href="likexiang.apk" download="曆刻響-1.0.2.apk">下載 APK</a>
 </header>
@@ -298,7 +303,7 @@ section.band { border-top: 0; background: var(--primary); color: var(--on-primar
 </section>
 </main>
 <footer class="wrap foot">
-  <nav aria-label="其他連結"><a href="https://github.com/bb6800182-boop/likexiang">GitHub 原始碼</a><a href="https://github.com/bb6800182-boop/likexiang/blob/main/LICENSE">MIT 授權</a><a href="https://c520.pages.dev">更多作品</a><a href="mailto:bb6800182@gmail.com">聯絡</a></nav>
+  <nav aria-label="其他連結"><a href="https://github.com/bb6800182-boop/likexiang">GitHub 原始碼</a><a href="https://github.com/bb6800182-boop/likexiang/blob/main/LICENSE">MIT 授權</a><a href="/">更多作品</a><a href="mailto:bb6800182@gmail.com">聯絡</a></nav>
   <p>© 2026 曆刻響</p>
   <p>Google、Google 日曆與 Android 是 Google LLC 的商標。曆刻響是個人開發的獨立作品，與 Google 沒有關係，也沒有經過 Google 認可。</p>
 </footer>
