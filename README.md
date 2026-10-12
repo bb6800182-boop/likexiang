@@ -4,7 +4,7 @@
 
 - 免費、開放原始碼（[MIT 授權](LICENSE)）。
 - 不要求網路權限，不收集任何資料；行程只透過手機系統的日曆資料庫讀寫，同步交給 Google 帳號本身。
-- 用 APK 安裝，沒有上架 Google Play：到[說明網站](https://likexiang.pages.dev)下載，安裝步驟與常見問題也在那裡。
+- 用 APK 安裝，沒有上架 Google Play：到[說明網站](https://c520.pages.dev/likexiang/)下載，安裝步驟與常見問題也在那裡。
 
 ## 功能
 
