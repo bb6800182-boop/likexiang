@@ -4,16 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "com.bryanh.calendaralarm"
+    namespace = "com.c520.likexiang"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.bryanh.calendaralarm"
+        applicationId = "com.c520.likexiang"
         // Android 13 起才有 USE_EXACT_ALARM 與通知權限，從 33 起跳可省掉舊版相容分支
         minSdk = 33
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.3"
+        versionCode = 6
+        versionName = "1.1.0"
     }
 
     // 正式版簽章：金鑰路徑與密碼放在使用者的 ~/.gradle/gradle.properties（calendarAlarm.*），不進版控。
