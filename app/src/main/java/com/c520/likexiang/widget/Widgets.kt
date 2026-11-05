@@ -18,11 +18,13 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.unit.ColorProvider
 import com.c520.likexiang.MainActivity
+import com.c520.likexiang.ServiceLocator
 import com.c520.likexiang.alarm.AlarmScheduler
 import com.c520.likexiang.ui.theme.Tok
 import com.c520.likexiang.voice.VoiceActivity
@@ -41,17 +43,25 @@ object Widgets {
      * 行程或鬧鐘狀態變了、過了午夜、改了時區時呼叫：讓每個小工具重讀資料。
      * 小工具的錯誤不能影響鬧鐘，所以這裡吞掉例外只記 log。
      */
-    suspend fun refresh(context: Context, resetOffset: Boolean = false) {
+    suspend fun refresh(context: Context, resetOffset: Boolean = false, colors: Boolean = false) {
         val app = context.applicationContext
         try {
             val manager = GlanceAppWidgetManager(app)
             var any = false
             any = refreshAll(app, manager.getGlanceIds(MonthWidget::class.java), MonthWidget(), resetOffset) || any
             any = refreshAll(app, manager.getGlanceIds(AgendaWidget::class.java), AgendaWidget()) || any
+            // 語音小工具沒有資料，只有換了重點色時要重畫
+            if (colors) VoiceWidget().updateAll(app)
             scheduleMidnight(app, any)
         } catch (e: Exception) {
             Log.w(TAG, "widget refresh failed", e)
         }
+    }
+
+    /** 小工具也用自選的重點色、底色：每次開始畫之前先讀設定（程序可能是為了更新小工具才剛開起來）。 */
+    suspend fun usePalette(context: Context) {
+        val s = ServiceLocator.store(context).settingsNow()
+        Tok.use(s.accentColor, s.canvasColor)
     }
 
     /** resetOffset：小工具的範圍改了（月、N 天、N 週），原本的上下頁位移就沒意義，回到今天。 */

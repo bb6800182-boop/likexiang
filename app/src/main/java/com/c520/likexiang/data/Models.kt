@@ -21,6 +21,8 @@ data class CalendarInfo(
     val visible: Boolean = true,
     /** 帳號類型（Google 帳號是 com.google）；查帳號可用的行程顏色時要用。 */
     val accountType: String = "",
+    /** Google 月曆上的日曆顏色；[color] 是本 App 換過的（沒換就一樣）。 */
+    val googleColor: Int = color,
 )
 
 /** 帳號可用的一種行程顏色（CalendarContract.Colors）；key 寫進 Events.EVENT_COLOR_KEY，Google 會同步。 */
@@ -41,6 +43,8 @@ data class EventInstance(
     val recurring: Boolean,
     /** 重複行程被單獨改過的那一次是另一筆 Events，這裡記著它屬於哪個系列。 */
     val originalId: Long? = null,
+    /** 行程自己設了顏色（不是跟著日曆）；本 App 換日曆顏色時不換這種。 */
+    val ownColor: Boolean = false,
 ) {
     val key: String get() = alarmKey(eventId, begin)
     val displayTitle: String get() = AlarmMarker.strip(title).ifBlank { "（無標題）" }
@@ -146,7 +150,21 @@ data class Settings(
     val customWeeks: Int = 2,
     /** 月曆小工具顯示的範圍。 */
     val widgetRange: WidgetRange = WidgetRange.MONTH,
+    /** 自選的重點色、底色（ARGB）；null＝預設。其他顏色照這兩個自動算（ui/theme/Palette）。 */
+    val accentColor: Int? = null,
+    val canvasColor: Int? = null,
+    /** 日曆在本 App 裡換的顏色（日曆 id → ARGB）。只存在手機上，Google 月曆的顏色不變。 */
+    val calendarColors: Map<Long, Int> = emptyMap(),
 ) {
+    /** 只留顯示中的日曆，並套上本 App 換的日曆顏色；行程自己有顏色的照行程的。 */
+    fun shown(list: List<EventInstance>): List<EventInstance> = list.mapNotNull { e ->
+        when {
+            e.calendarId in hiddenCalendarIds -> null
+            e.ownColor -> e
+            else -> calendarColors[e.calendarId]?.let { e.copy(color = it) } ?: e
+        }
+    }
+
     companion object {
         val SNOOZE_OPTIONS = listOf(5, 10, 15)
         val OFFSET_OPTIONS = listOf(0, 5, 10, 15, 30, 60)

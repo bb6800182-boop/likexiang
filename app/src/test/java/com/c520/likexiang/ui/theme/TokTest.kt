@@ -44,11 +44,11 @@ class TokTest {
     fun textColorFollowsGoogleWidget() {
         // 截圖裡 Google 用白字的：橙橘、薰衣草、鈷藍、羅勒綠、尤加利、石墨、番茄紅
         for (c in listOf(0xFFF4511E, 0xFF7986CB, 0xFF4285F4, 0xFF0B8043, 0xFF009688, 0xFF616161, 0xFFD50000)) {
-            assertEquals(c.toString(16), Tok.onPrimary, Tok.onEventColor(c.toInt()))
+            assertEquals(c.toString(16), Color.White, Tok.onEventColor(c.toInt()))
         }
         // 用深色字的：鼠尾草綠、紅鶴、酪梨綠
         for (c in listOf(0xFF33B679, 0xFFE67C73, 0xFFC0CA33)) {
-            assertNotEquals(c.toString(16), Tok.onPrimary, Tok.onEventColor(c.toInt()))
+            assertNotEquals(c.toString(16), Color.White, Tok.onEventColor(c.toInt()))
         }
     }
 
@@ -61,7 +61,7 @@ class TokTest {
             val bg = Tok.eventColor(argb)
             val fg = Tok.onEventColor(argb)
             val ratio = Tok.contrast(fg, bg)
-            val min = if (fg == Tok.onPrimary) 2.3f else 4.5f
+            val min = if (fg == Color.White) 2.3f else 4.5f
             assertTrue("rgb($r,$g,$b) 對比 $ratio", ratio >= min)
         }
     }

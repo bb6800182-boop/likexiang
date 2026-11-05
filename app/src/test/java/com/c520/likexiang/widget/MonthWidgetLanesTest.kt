@@ -31,6 +31,14 @@ class MonthWidgetLanesTest {
     }
 
     @Test
+    fun lastLaneMayDropItsGap() {
+        // 一週一列、字級 1：日期列 18dp，每條車道 16dp（色塊 14＋間距 2）
+        val normal = GridDims(1f)
+        assertEquals(3, lanesFor(128.dp, 1, normal)) // 格子剩 46dp：3 條色塊＋中間 2 個間距
+        assertEquals(2, lanesFor(127.dp, 1, normal))
+    }
+
+    @Test
     fun customRangesGetMoreLanes() {
         assertEquals(7, lanesFor(260.dp, 1, large, cols = 3)) // 3 天一列：矮的小工具也放得下
         assertEquals(6, lanesFor(400.dp, 2, large)) // 2 週
@@ -51,6 +59,7 @@ class MonthWidgetLanesTest {
         // 一週：週一到三跨日（格子裡只畫週三那段）、週五第 2 條車道一筆單日、週日「+N」佔最後一條
         val week = WeekLayout(listOf(PlacedSpan(0, 0, 3, 0), PlacedSpan(1, 4, 1, 1)), mapOf(6 to 2))
         val cells = 7 * 6 + 1 + 2 + 3 // 每格的日期列＋週三 1 條、週五 2 條、週日 3 條
-        assertEquals(32 + 3 + cells + barViews(week, 7), monthViews(listOf(week), 7, lanes = 3))
+        val gaps = 2 // 格子裡的兩個色塊外面各一層留間距的 Box
+        assertEquals(32 + 3 + cells + gaps + barViews(week, 7), monthViews(listOf(week), 7, lanes = 3))
     }
 }

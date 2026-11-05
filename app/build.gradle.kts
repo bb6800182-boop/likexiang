@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -12,20 +14,23 @@ android {
         // Android 13 起才有 USE_EXACT_ALARM 與通知權限，從 33 起跳可省掉舊版相容分支
         minSdk = 33
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.1.0"
+        versionCode = 9
+        versionName = "1.2.1"
     }
 
-    // 正式版簽章：金鑰路徑與密碼放在使用者的 ~/.gradle/gradle.properties（calendarAlarm.*），不進版控。
-    // 沒有設定的電腦照樣能編 debug 版，只是編不出簽好章的正式版。
-    val releaseStore = providers.gradleProperty("calendarAlarm.storeFile").orNull
+    // 簽章放在專案資料夾旁邊的 calendar-alarm-signing（不進版控；用 Dropbox 同步，每台電腦都用同一份）：
+    // 正式版的金鑰與密碼寫在 signing.properties；開發版用那裡的 debug.keystore，換一台電腦編的開發版也能直接更新手機上的 App。
+    // 沒有這個資料夾的電腦照樣能編 debug 版（用 Android 預設的 debug 金鑰），只是編不出簽好章的正式版。
+    val signingDir = rootDir.resolveSibling("calendar-alarm-signing")
+    val signing = Properties().apply { signingDir.resolve("signing.properties").takeIf { it.isFile }?.reader()?.use { load(it) } }
     signingConfigs {
-        if (releaseStore != null) {
+        signingDir.resolve("debug.keystore").takeIf { it.isFile }?.let { getByName("debug").storeFile = it }
+        signing.getProperty("storeFile")?.let { store ->
             create("release") {
-                storeFile = file(releaseStore)
-                storePassword = providers.gradleProperty("calendarAlarm.storePassword").get()
-                keyAlias = providers.gradleProperty("calendarAlarm.keyAlias").get()
-                keyPassword = providers.gradleProperty("calendarAlarm.keyPassword").get()
+                storeFile = signingDir.resolve(store)
+                storePassword = signing.getProperty("storePassword")
+                keyAlias = signing.getProperty("keyAlias")
+                keyPassword = signing.getProperty("keyPassword")
             }
         }
     }

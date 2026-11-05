@@ -25,6 +25,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
 )
 
+private const val OPAQUE = 0xFF000000.toInt()
+
 /** 只存在手機上的資料：鬧鐘設定與偏好。行程本身一律在 Google 月曆。 */
 class LocalStore(private val context: Context) {
 
@@ -50,6 +52,9 @@ class LocalStore(private val context: Context) {
         val defaultDuration = intPreferencesKey("default_duration")
         val defaultReminder = intPreferencesKey("default_reminder") // -1＝不要一般通知
         val wizardDone = booleanPreferencesKey("wizard_done")
+        val accentColor = intPreferencesKey("accent_color")
+        val canvasColor = intPreferencesKey("canvas_color")
+        val calendarColors = stringPreferencesKey("calendar_colors")
         val pendingTrigger = longPreferencesKey("pending_trigger")
     }
 
@@ -135,6 +140,10 @@ class LocalStore(private val context: Context) {
         p[K.defaultDuration] = s.defaultDurationMin.coerceIn(5, 24 * 60)
         p[K.defaultReminder] = s.defaultReminderMin?.coerceIn(0, 4 * 7 * 24 * 60) ?: -1
         p[K.wizardDone] = s.wizardDone
+        // 顏色一律存成不透明；null＝預設，拿掉設定
+        if (s.accentColor == null) p.remove(K.accentColor) else p[K.accentColor] = s.accentColor or OPAQUE
+        if (s.canvasColor == null) p.remove(K.canvasColor) else p[K.canvasColor] = s.canvasColor or OPAQUE
+        p[K.calendarColors] = Codec.encodeLongInt(s.calendarColors.mapValues { it.value or OPAQUE })
     }
 
     private suspend fun edit(block: (MutablePreferences) -> Unit) {
@@ -164,6 +173,9 @@ class LocalStore(private val context: Context) {
             customDays = (this[K.customDays] ?: d.customDays).coerceIn(Settings.CUSTOM_DAYS.first, Settings.CUSTOM_DAYS.last),
             customWeeks = (this[K.customWeeks] ?: d.customWeeks).coerceIn(Settings.CUSTOM_WEEKS.first, Settings.CUSTOM_WEEKS.last),
             widgetRange = WidgetRange.entries.firstOrNull { it.name == this[K.widgetRange] } ?: d.widgetRange,
+            accentColor = this[K.accentColor],
+            canvasColor = this[K.canvasColor],
+            calendarColors = Codec.decodeLongInt(this[K.calendarColors]),
         )
     }
 

@@ -25,6 +25,7 @@
   - 在 App 打開鬧鐘，Google 月曆的標題會自動加上「⏰ 」；在電腦上加 ⏰ 的行程，手機也會響。
   - 有其他與會者的會議只記在手機，不改到大家看到的標題。
 - **桌面小工具**：月曆（整個月、自訂天數或週數）、行程清單，以及 1×1 的語音新增。
+- **自選顏色**：重點色、底色（含深色）都能自己選，桌面小工具一起換；顏色太淺或太深時自動調整，字一定看得清楚。日曆也能在 App 裡換顏色（只換 App 裡的，Google 月曆不變）。
 - **鬧鐘清單**：列出未來 7 天會響的鬧鐘，可以單次略過。
 - **不會亂響**：響之前再確認行程還在、時間沒變、沒有拒絕或取消；開機、改時間或時區、App 更新、電腦上改了行程時自動重排。鬧鐘需要的權限沒開或鬧鐘音量是 0 時，首頁會提醒。
 - **接手「加到月曆」**：其他 App 的「加到月曆」、開啟行程或日期時可以選曆刻響，也能設成一律用它。
@@ -46,16 +47,16 @@
    專案放在 Windows 的 Dropbox 裡時，編譯輸出會改放到 `%LOCALAPPDATA%\calendar-alarm-build`（見 `build.gradle.kts`）。
 4. 打開 App，依精靈開好權限，再按「10 秒後試響」確認會響。
 
-正式版（release）要自己的簽章金鑰：在使用者的 `~/.gradle/gradle.properties`（不是專案資料夾）加上
+正式版（release）要自己的簽章金鑰：在專案資料夾**旁邊**（不是裡面，才不會被 commit）建一個 `calendar-alarm-signing` 資料夾，放金鑰檔和 `signing.properties`：
 
 ```properties
-calendarAlarm.storeFile=C:/Users/你的帳號/keys/calendar-alarm.jks
-calendarAlarm.storePassword=…
-calendarAlarm.keyAlias=…
-calendarAlarm.keyPassword=…
+storeFile=你的金鑰.jks
+storePassword=…
+keyAlias=…
+keyPassword=…
 ```
 
-再執行 `./gradlew assembleRelease`。金鑰與密碼不要放進版控。
+再執行 `./gradlew assembleRelease`。金鑰與密碼不要放進版控。那個資料夾裡也可以放一份 `debug.keystore`，在好幾台電腦編的開發版就是同一個簽章，可以直接更新手機上的 App。
 
 ## 需要的權限
 

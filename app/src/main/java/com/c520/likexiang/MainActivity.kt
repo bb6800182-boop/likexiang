@@ -8,16 +8,23 @@ import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.CalendarContract.Events
 import android.util.Log
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.drawable.toDrawable
 import com.c520.likexiang.ui.AppRoot
 import com.c520.likexiang.ui.ExternalRequest
 import com.c520.likexiang.ui.MainViewModel
 import com.c520.likexiang.ui.Screen
 import com.c520.likexiang.ui.theme.AppTheme
+import com.c520.likexiang.ui.theme.Palette
+import com.c520.likexiang.ui.theme.Tok
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -27,13 +34,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 介面只有淺色：系統深色模式下狀態列也維持深色圖示，才看得到
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-        )
+        chrome(Tok.palette)
         if (savedInstanceState == null) handleIntent(intent)
-        setContent { AppTheme { AppRoot(vm) } }
+        // 讀到設定（含自選的顏色）才畫第一個畫面，不會先閃一下預設的白底
+        val content = findViewById<View>(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean = vm.ready.value.also { if (it) content.viewTreeObserver.removeOnPreDrawListener(this) }
+        })
+        setContent {
+            val palette = Tok.palette
+            LaunchedEffect(palette.canvas) { chrome(palette) }
+            AppTheme { AppRoot(vm) }
+        }
+    }
+
+    /** 狀態列、導覽列的圖示與視窗底色跟著自選的底色：淺底用深色圖示，深底用淺色圖示（跟系統的深色模式無關）。 */
+    private fun chrome(palette: Palette) {
+        val style = if (palette.isLight) SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT) else SystemBarStyle.dark(Color.TRANSPARENT)
+        enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+        window.setBackgroundDrawable(palette.canvas.toArgb().toDrawable())
     }
 
     override fun onNewIntent(intent: Intent) {

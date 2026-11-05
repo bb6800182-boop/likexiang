@@ -33,6 +33,7 @@ import com.c520.likexiang.data.SearchQuery
 import com.c520.likexiang.data.Settings
 import com.c520.likexiang.data.SyncMode
 import com.c520.likexiang.data.alarmKey
+import com.c520.likexiang.ui.theme.Tok
 import com.c520.likexiang.widget.Widgets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -133,8 +135,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val settings: StateFlow<Settings> = store.settings.stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
     val alarmState: StateFlow<AlarmState> = store.alarmState.stateIn(viewModelScope, SharingStarted.Eagerly, AlarmState.EMPTY)
 
-    /** 讀到第一筆設定前不畫畫面，避免每次開啟時首次設定精靈閃一下。 */
-    val ready: StateFlow<Boolean> = store.settings.map { true }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    /**
+     * 讀到第一筆設定前不畫畫面（MainActivity 也等這個才畫第一個畫面），避免每次開啟時首次設定精靈閃一下、
+     * 自選的顏色先閃一下預設色。介面顏色在這裡跟著設定換。
+     */
+    val ready: StateFlow<Boolean> = store.settings.map { s ->
+        Tok.use(s.accentColor, s.canvasColor)
+        true
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val _stack = MutableStateFlow<List<Screen>>(listOf(Screen.Home))
     val stack: StateFlow<List<Screen>> = _stack.asStateFlow()
@@ -168,7 +176,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var searchJob: Job? = null
 
     private val _calendars = MutableStateFlow<List<CalendarInfo>>(emptyList())
-    val calendars: StateFlow<List<CalendarInfo>> = _calendars.asStateFlow()
+
+    /** 手機上的日曆；color 套上本 App 換的顏色（googleColor 是 Google 月曆上的）。 */
+    val calendars: StateFlow<List<CalendarInfo>> = combine(_calendars, settings) { list, s ->
+        list.map { c -> s.calendarColors[c.id]?.let { c.copy(color = it) } ?: c }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _upcoming = MutableStateFlow<List<PlannedAlarm>>(emptyList())
     val upcoming: StateFlow<List<PlannedAlarm>> = _upcoming.asStateFlow()
@@ -201,12 +213,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 last = s
                 if (prev == null) return@collect
                 val view = prev.weekStartsMonday != s.weekStartsMonday || prev.hiddenCalendarIds != s.hiddenCalendarIds ||
-                    prev.showLunar != s.showLunar || prev.customDays != s.customDays || prev.customWeeks != s.customWeeks
+                    prev.showLunar != s.showLunar || prev.customDays != s.customDays || prev.customWeeks != s.customWeeks ||
+                    prev.calendarColors != s.calendarColors
                 if (prev.weekStartsMonday != s.weekStartsMonday) weeksFirst = weekStartOf(weeksFirst)
                 if (view) reload()
                 val range = prev.widgetRange != s.widgetRange || prev.customDays != s.customDays ||
                     prev.customWeeks != s.customWeeks || prev.weekStartsMonday != s.weekStartsMonday
-                if (view || range || prev.dayStartMinute != s.dayStartMinute) Widgets.refresh(ctx, resetOffset = range)
+                val colors = prev.accentColor != s.accentColor || prev.canvasColor != s.canvasColor
+                if (view || range || colors || prev.dayStartMinute != s.dayStartMinute) Widgets.refresh(ctx, resetOffset = range, colors = colors)
             }
         }
     }
@@ -487,7 +501,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun visible(list: List<EventInstance>, s: Settings) = list.filter { it.calendarId !in s.hiddenCalendarIds }
+    private fun visible(list: List<EventInstance>, s: Settings) = s.shown(list)
 
     private fun startMillis(d: LocalDate): Long = d.atStartOfDay(zone).toInstant().toEpochMilli()
 

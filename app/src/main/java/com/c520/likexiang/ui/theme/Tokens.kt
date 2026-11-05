@@ -6,6 +6,9 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
@@ -17,20 +20,33 @@ import androidx.compose.ui.unit.sp
 
 /** 與 DESIGN.md 同名的設計 token。改顏色、字級、間距、圓角時先改 DESIGN.md，再同步這裡。 */
 object Tok {
-    // colors
-    val primary = Color(0xFF5645D4)
-    val onPrimary = Color(0xFFFFFFFF)
-    val canvas = Color(0xFFFFFFFF)
-    val surface = Color(0xFFF6F5F4)
-    val hairline = Color(0xFFE5E3DF)
-    val hairlineStrong = Color(0xFFC8C4BE)
-    val ink = Color(0xFF1A1A1A)
-    val charcoal = Color(0xFF37352F)
-    val slate = Color(0xFF5D5B54)
-    val steel = Color(0xFF787671)
-    val alarmTint = Color(0xFFE6E0F5)
-    val todayTint = Color(0xFFEEECFB)
-    val error = Color(0xFFB3261E)
+    /**
+     * 目前的介面顏色：預設是 DESIGN.md 的 token，使用者自選重點色或底色時換成 [Palette.of] 算出來的。
+     * 存成 Compose 的狀態，換顏色時 App 的畫面和小工具都會跟著重畫。
+     */
+    var palette by mutableStateOf(Palette.DEFAULT)
+        private set
+
+    /** 套用設定裡的重點色、底色（ARGB；null＝預設）。App、響鈴畫面、小工具共用這個程序裡的同一組顏色。 */
+    fun use(accent: Int?, canvas: Int?) {
+        val p = Palette.of(accent, canvas)
+        if (p != palette) palette = p
+    }
+
+    // colors（跟著 palette；響鈴畫面固定海軍藍，不跟著換）
+    val primary get() = palette.primary
+    val onPrimary get() = palette.onPrimary
+    val canvas get() = palette.canvas
+    val surface get() = palette.surface
+    val hairline get() = palette.hairline
+    val hairlineStrong get() = palette.hairlineStrong
+    val ink get() = palette.ink
+    val charcoal get() = palette.charcoal
+    val slate get() = palette.slate
+    val steel get() = palette.steel
+    val alarmTint get() = palette.alarmTint
+    val todayTint get() = palette.todayTint
+    val error get() = palette.error
     val ringBg = Color(0xFF0A1530)
     val ringSurface = Color(0xFF1A2A52)
     val ringInk = Color(0xFFFFFFFF)
@@ -78,7 +94,7 @@ object Tok {
      */
     fun onEventColor(argb: Int): Color {
         val bg = eventColor(argb)
-        return if (bg.luminance() < WHITE_TEXT_BELOW) onPrimary else lerp(bg, Color.Black, DARK_TEXT)
+        return if (bg.luminance() < WHITE_TEXT_BELOW) Color.White else lerp(bg, Color.Black, DARK_TEXT)
     }
 
     /** WCAG 對比值（1～21）。 */

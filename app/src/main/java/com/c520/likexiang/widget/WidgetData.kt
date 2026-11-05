@@ -119,10 +119,10 @@ object WidgetData {
         AgendaModel(true, today, rows, refresh)
     }
 
-    /** 跟 App 一樣只顯示勾選的日曆；沒有日曆權限或查詢失敗回傳 null。 */
+    /** 跟 App 一樣只顯示勾選的日曆、套上本 App 換的日曆顏色；沒有日曆權限或查詢失敗回傳 null。 */
     private fun query(context: Context, s: Settings, from: Long, to: Long): List<EventInstance>? {
         val repo = ServiceLocator.repo(context)
         if (!repo.hasReadPermission()) return null
-        return repo.instancesOrNull(from, to)?.filter { it.calendarId !in s.hiddenCalendarIds }
+        return repo.instancesOrNull(from, to)?.let(s::shown)
     }
 }

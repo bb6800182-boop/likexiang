@@ -81,6 +81,7 @@ class MonthWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Widgets.usePalette(context)
         // 先載好再顯示，更新時不會閃一下「載入中」
         val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         val first = WidgetData.month(context, prefs[Widgets.OFFSET] ?: 0, prefs[Widgets.REFRESH] ?: 0)
@@ -124,7 +125,10 @@ class ShiftMonthAction : ActionCallback {
 private val HEADER_H = 40.dp
 private val ROOT_PAD = 2.dp
 
-// Glance 一個版面最多 500 個 view，車道數要讓「每格都排滿」時也不超過（留一點餘裕）
+/** 色塊之間的間距，跟 App 一樣 2dp（DESIGN.md「Layout」）。小工具沒有外距，用外層的 padding 留出來。 */
+private val CHIP_GAP = 2.dp
+
+// Glance 一個版面最多 500 個 view：整個月實際用到的不能超過（留一點餘裕），超過就少排一條車道
 private const val VIEW_BUDGET = 480
 private const val FIXED_VIEWS = 32 // 頂部列、星期列、格線背景、今天的圓
 private const val WEEK_VIEWS = 3 // 每週：外框、週格線、七天那一列
@@ -139,28 +143,29 @@ internal class GridDims(fontScale: Float) {
     /** 日期＋農曆那一行。 */
     val label = mark + 2.dp
 
-    /** 一條色塊（9sp 一行字）。 */
-    val slot = 11.dp * fontScale + 4.dp
+    /** 一條車道：色塊（9sp 一行字）加下面的間距。 */
+    val slot = 11.dp * fontScale + 3.dp + CHIP_GAP
 
     /** 星期列（估計值，寧可估大，車道才不會排太多）。 */
     val weekday = 10.dp * fontScale * 1.5f + 4.dp
 }
 
 /**
- * 一格放幾條色塊：這個版面高度放得下幾條，再受 view 數量上限限制。放不下的行程在最後一條顯示「+N」。
+ * 一格放幾條色塊：這個版面高度放得下幾條，再受 view 數量上限限制（這裡先照每條 1 個 view 估；
+ * 色塊外面留間距的那一層由 [monthViews] 照實際的行程算）。放不下的行程在最後一條顯示「+N」。
  * 0 表示連一條都放不下，改用色點（每格最多 4 個 view，6 週也不會超過上限）。
  */
 internal fun lanesFor(height: Dp, weeks: Int, d: GridDims, cols: Int = 7): Int {
     val grid = height - ROOT_PAD * 2 - HEADER_H - d.weekday
     val perWeek = grid / weeks - 1.dp - d.label // 每週上方 1dp 格線
-    val fit = (perWeek / d.slot).toInt()
+    val fit = ((perWeek + CHIP_GAP) / d.slot).toInt() // 最後一條下面的間距可以被切掉
     val budget = (VIEW_BUDGET - FIXED_VIEWS - WEEK_VIEWS * weeks) / (cols * weeks) - CELL_VIEWS
     return minOf(fit, budget, MAX_LANES).coerceAtLeast(0)
 }
 
 /**
- * 實際會用幾個 view：每格的日期列與畫到的車道（到最後一個有東西的車道為止），加上跨日行程的上層。
- * [lanesFor] 已經用「每格都排滿」估過上限，這裡再把跨日行程的上層算進去。
+ * 實際會用幾個 view：每格的日期列與畫到的車道（到最後一個有東西的車道為止），
+ * 格子裡每個色塊外面留間距的那一層，加上跨日行程的上層。
  */
 internal fun monthViews(layouts: List<WeekLayout?>, cols: Int, lanes: Int): Int = FIXED_VIEWS + layouts.sumOf { layout ->
     val drawn = IntArray(cols) // 每格畫幾條車道
@@ -169,7 +174,8 @@ internal fun monthViews(layouts: List<WeekLayout?>, cols: Int, lanes: Int): Int 
         drawn[last] = maxOf(drawn[last], p.lane + 1)
     }
     layout?.more?.keys?.forEach { col -> drawn[col] = lanes }
-    WEEK_VIEWS + cols * CELL_VIEWS + drawn.sum() + barViews(layout, cols)
+    // 每筆行程在格子裡畫一段（跨日的畫最後一天），外面各多一層 Box
+    WEEK_VIEWS + cols * CELL_VIEWS + drawn.sum() + (layout?.placed?.size ?: 0) + barViews(layout, cols)
 }
 
 /**
@@ -183,14 +189,14 @@ internal fun barViews(layout: WeekLayout?, cols: Int): Int {
 
 /**
  * 日與日之間的直線：小工具不能畫線，用一張「欄數×100」×1 的小圖當月曆格背景拉伸到整格，
- * 每 100 像素（一欄）最右邊 2 像素是格線色。色塊蓋在線上，跨日行程才接得起來。
+ * 每 100 像素（一欄）最右邊 2 像素是格線色（格線色跟著自選的底色換）。色塊蓋在線上，跨日行程才接得起來。
  */
-private val columnLines = HashMap<Int, Bitmap>()
+private val columnLines = HashMap<Pair<Int, Int>, Bitmap>()
 
 private fun columnLines(cols: Int): Bitmap = synchronized(columnLines) {
-    columnLines.getOrPut(cols) {
+    val line = Tok.hairline.toArgb()
+    columnLines.getOrPut(cols to line) {
         Bitmap.createBitmap(cols * 100, 1, Bitmap.Config.ARGB_8888).apply {
-            val line = Tok.hairline.toArgb()
             for (col in 1 until cols) {
                 setPixel(col * 100 - 2, 0, line)
                 setPixel(col * 100 - 1, 0, line)
@@ -294,7 +300,7 @@ private sealed interface Piece {
 /**
  * 一週：上方一條淡格線，下面七天平分寬度。車道由 WeekLayoutEngine 排好。
  * 跨日行程除了最後一天，都畫在格子上層一整條，蓋過日與日之間的格線；
- * 最後一天那段留在格子裡，右邊照樣露出 1dp 格線，跟後面的色塊分開。
+ * 最後一天那段留在格子裡，右邊照樣留間距、露出格線，跟後面的色塊分開。
  */
 @Composable
 private fun ColumnScope.Week(m: MonthModel, week: List<LocalDate>, spans: List<WeekSpan>, layout: WeekLayout?, d: GridDims, lanes: Int) {
@@ -318,7 +324,7 @@ private fun ColumnScope.Week(m: MonthModel, week: List<LocalDate>, spans: List<W
     }
 }
 
-/** 七天的格子：今天淡紫底、點了開那一天；格子裡是日期與這一天的色塊。 */
+/** 七天的格子：今天整格鋪淡底、點了開那一天；格子裡是日期與這一天的色塊。 */
 @Composable
 private fun DayCells(m: MonthModel, week: List<LocalDate>, spans: List<WeekSpan>, pieces: Array<Array<Piece?>>, d: GridDims, lanes: Int, modifier: GlanceModifier) {
     val context = LocalContext.current
@@ -327,10 +333,10 @@ private fun DayCells(m: MonthModel, week: List<LocalDate>, spans: List<WeekSpan>
             val events = spans.filter { col in it.startCol until it.startCol + it.span }.sortedBy { it.sortKey }.map { m.instances[it.id] }
             Column(
                 GlanceModifier.defaultWeight().fillMaxHeight()
-                    // 今天整格淡紫底，一眼找得到
+                    // 今天整格鋪淡底（重點色疊在底色上），一眼找得到
                     .then(if (day == m.today) GlanceModifier.background(Widgets.color(Tok.todayTint)) else GlanceModifier)
-                    // 右邊留 1dp 露出背景的直線
-                    .padding(end = 1.dp)
+                    // 右邊留間距、露出背景的直線，跟隔天的色塊分開
+                    .padding(end = CHIP_GAP)
                     .clickable(actionStartActivity(Widgets.openDay(context, day)))
                     .semantics { contentDescription = dayDescription(m, day, events) },
             ) {
@@ -365,8 +371,9 @@ private fun Bars(m: MonthModel, bars: List<PlacedSpan>, cols: Int, d: GridDims) 
             if (above > 0.dp) Spacer(GlanceModifier.height(above))
             above = 0.dp
             // 置中對齊、色塊撐滿高度：Row（LinearLayout）預設照文字基線對齊，
-            // 有中文標題的第一段跟空白的後幾段基線不同，後幾段會往下掉幾個像素
-            Row(GlanceModifier.fillMaxWidth().height(d.slot), verticalAlignment = Alignment.CenterVertically) {
+            // 有中文標題的第一段跟空白的後幾段基線不同，後幾段會往下掉幾個像素。
+            // 下面留間距，跟格子裡的車道對齊
+            Row(GlanceModifier.fillMaxWidth().height(d.slot).padding(bottom = CHIP_GAP), verticalAlignment = Alignment.CenterVertically) {
                 for (col in 0 until cols) {
                     val p = inLane.firstOrNull { col >= it.startCol && col < it.startCol + it.span - 1 }
                     if (p == null) Spacer(GlanceModifier.defaultWeight()) else BarPiece(m, m.instances[p.id], first = col == p.startCol)
@@ -444,15 +451,18 @@ private fun LanePiece(m: MonthModel, piece: Piece?, slot: Dp) {
         )
         is Piece.Event -> {
             val inst = piece.inst
-            Text(
-                if (piece.multiDay) "" else chipTitle(m, inst),
-                style = TextStyle(color = Widgets.color(Tok.onEventColor(inst.color)), fontSize = 9.sp, fontWeight = FontWeight.Medium),
-                // 單日行程用圓角（event-chip），上下左右相鄰的色塊才分得開；跨日行程直角，接著上層那一條
-                modifier = GlanceModifier.fillMaxWidth().height(slot)
-                    .then(if (piece.multiDay) GlanceModifier else GlanceModifier.cornerRadius(Tok.rXs))
-                    .background(Widgets.color(Tok.eventColor(inst.color))).padding(horizontal = 2.dp),
-                maxLines = 1,
-            )
+            // 下面留間距：小工具沒有外距，用外層 Box 的 padding 留，同色的行程上下才不會黏成一片
+            Box(GlanceModifier.fillMaxWidth().height(slot).padding(bottom = CHIP_GAP)) {
+                Text(
+                    if (piece.multiDay) "" else chipTitle(m, inst),
+                    style = TextStyle(color = Widgets.color(Tok.onEventColor(inst.color)), fontSize = 9.sp, fontWeight = FontWeight.Medium),
+                    // 單日行程用圓角（event-chip）；跨日行程直角，接著上層那一條
+                    modifier = GlanceModifier.fillMaxSize()
+                        .then(if (piece.multiDay) GlanceModifier else GlanceModifier.cornerRadius(Tok.rXs))
+                        .background(Widgets.color(Tok.eventColor(inst.color))).padding(horizontal = 2.dp),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

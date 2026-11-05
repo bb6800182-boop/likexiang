@@ -50,6 +50,7 @@ class AgendaWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Widgets.usePalette(context)
         val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         val first = WidgetData.agenda(context, prefs[Widgets.REFRESH] ?: 0)
         provideContent {

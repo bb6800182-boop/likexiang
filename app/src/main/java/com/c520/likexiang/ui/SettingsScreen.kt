@@ -49,6 +49,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
@@ -56,8 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.c520.likexiang.BuildConfig
 import com.c520.likexiang.R
+import com.c520.likexiang.data.CalendarInfo
 import com.c520.likexiang.data.Settings
 import com.c520.likexiang.data.defaultCalendarFor
+import com.c520.likexiang.ui.theme.Palette
 import com.c520.likexiang.ui.theme.Tok
 import com.c520.likexiang.ui.theme.TypeTok
 import kotlinx.coroutines.Dispatchers
@@ -66,10 +70,10 @@ import kotlinx.coroutines.withContext
 private const val DEFAULT_RINGTONE = "系統預設鬧鐘鈴聲"
 
 /** 設定頁點一列跳出的對話框。 */
-private enum class SettingsDialog { OFFSET, DAY_START, CALENDAR, LICENSES }
+private enum class SettingsDialog { OFFSET, DAY_START, CALENDAR, LICENSES, ACCENT, CANVAS }
 
 /**
- * 設定：依用途分成幾張卡片（鬧鐘、新增行程、檢視、月曆小工具、顯示的日曆、權限、關於），
+ * 設定：依用途分成幾張卡片（鬧鐘、新增行程、檢視、外觀、月曆小工具、顯示的日曆、權限、關於），
  * 卡片之間留白、各有標題，不會全部擠在一起。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +83,7 @@ fun SettingsScreen(vm: MainViewModel) {
     val calendars by vm.calendars.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
+    var colorFor by remember { mutableStateOf<CalendarInfo?>(null) } // 正在換顏色的日曆
     val ringtoneLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode == Activity.RESULT_OK) {
             val uri = res.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
@@ -181,6 +186,25 @@ fun SettingsScreen(vm: MainViewModel) {
                 SwitchRow("顯示農曆", settings.showLunar, onChange = { on -> vm.updateSettings { it.copy(showLunar = on) } })
             }
 
+            SettingsCard("外觀", R.drawable.ic_palette) {
+                SettingRow("重點色", accentLabel(settings), "今天的圓、選取中的選項、按鈕與開關", swatch = Tok.primary) {
+                    dialog = SettingsDialog.ACCENT
+                }
+                CardDivider()
+                SettingRow(
+                    "底色",
+                    canvasLabel(settings),
+                    "App 和桌面小工具的底色；選深色時，字和格線會跟著變淺色",
+                    swatch = Tok.canvas,
+                ) { dialog = SettingsDialog.CANVAS }
+                if (settings.accentColor != null || settings.canvasColor != null) {
+                    CardDivider()
+                    Box(Modifier.padding(vertical = Tok.sSm)) {
+                        OutlineButton("恢復預設顏色", onClick = { vm.updateSettings { it.copy(accentColor = null, canvasColor = null) } })
+                    }
+                }
+            }
+
             SettingsCard("月曆小工具", R.drawable.ic_rows) {
                 ChoiceBlock("顯示範圍", "天數、週數跟上面的自訂檢視一樣；改了之後小工具回到今天") {
                     OptionChip("整個月", settings.widgetRange == WidgetRange.MONTH) { vm.updateSettings { it.copy(widgetRange = WidgetRange.MONTH) } }
@@ -192,8 +216,14 @@ fun SettingsScreen(vm: MainViewModel) {
             SettingsCard("顯示的日曆", R.drawable.ic_list) {
                 Box(Modifier.padding(bottom = Tok.sXs)) {
                     Column {
-                        CalendarToggles(calendars, settings.hiddenCalendarIds) { c, shown -> vm.toggleCalendar(c, shown) }
+                        CalendarToggles(calendars, settings.hiddenCalendarIds, onColor = { colorFor = it }) { c, shown -> vm.toggleCalendar(c, shown) }
                         Text("隱藏的日曆仍會照常響鬧鐘（鬧鐘是逐筆設定的）。", style = TypeTok.caption, color = Tok.slate, modifier = Modifier.padding(top = Tok.sXxs))
+                        Text(
+                            "日曆的顏色只在曆刻響裡換，Google 月曆的顏色不變；行程自己設了顏色的，照行程的顏色。",
+                            style = TypeTok.caption,
+                            color = Tok.slate,
+                            modifier = Modifier.padding(top = Tok.sXxs),
+                        )
                     }
                 }
             }
@@ -250,7 +280,65 @@ fun SettingsScreen(vm: MainViewModel) {
             )
         }
         SettingsDialog.LICENSES -> LicensesDialog(dismiss)
+        SettingsDialog.ACCENT -> ColorPickerDialog(
+            title = "重點色",
+            current = settings.accentColor,
+            swatches = ACCENT_SWATCHES,
+            defaultArgb = Palette.DEFAULT.primary.toArgb(),
+            onPick = { argb ->
+                vm.updateSettings { it.copy(accentColor = argb) }
+                dialog = null
+            },
+            onDismiss = dismiss,
+        ) { PalettePreview(Palette.of(it, settings.canvasColor)) }
+        SettingsDialog.CANVAS -> ColorPickerDialog(
+            title = "底色",
+            current = settings.canvasColor,
+            swatches = CANVAS_SWATCHES,
+            defaultArgb = Palette.DEFAULT.canvas.toArgb(),
+            onPick = { argb ->
+                vm.updateSettings { it.copy(canvasColor = argb) }
+                dialog = null
+            },
+            onDismiss = dismiss,
+        ) { PalettePreview(Palette.of(settings.accentColor, it)) }
         null -> Unit
+    }
+    colorFor?.let { c ->
+        ColorPickerDialog(
+            title = "「${c.displayName}」的顏色",
+            current = settings.calendarColors[c.id],
+            swatches = CALENDAR_SWATCHES,
+            defaultArgb = c.googleColor,
+            display = Tok::eventColor,
+            onPick = { argb ->
+                vm.updateSettings { s -> s.copy(calendarColors = if (argb == null) s.calendarColors - c.id else s.calendarColors + (c.id to argb)) }
+                colorFor = null
+            },
+            onDismiss = { colorFor = null },
+        ) { CalendarColorPreview(c.displayName, it ?: c.googleColor) }
+    }
+}
+
+/** 底色目前的值：自選的色碼；太中間的灰自動調過時註明。 */
+private fun canvasLabel(s: Settings): String {
+    val chosen = s.canvasColor ?: return "預設（白）"
+    val label = "#${hexOf(chosen)}"
+    return when {
+        Tok.canvas.toArgb() == chosen or 0xFF000000.toInt() -> label
+        Tok.palette.isLight -> "$label（已自動調淺，字才看得清楚）"
+        else -> "$label（已自動調深，字才看得清楚）"
+    }
+}
+
+/** 重點色目前的值：自選的色碼；太淺或太深、自動調過時註明，免得以為選錯。 */
+private fun accentLabel(s: Settings): String {
+    val chosen = s.accentColor ?: Palette.DEFAULT.primary.toArgb()
+    val label = s.accentColor?.let { "#${hexOf(it)}" } ?: "預設（紫）"
+    return when {
+        Tok.primary.toArgb() == chosen or 0xFF000000.toInt() -> label
+        Tok.palette.isLight -> "$label（已自動調深，字才看得清楚）"
+        else -> "$label（已自動調淺，字才看得清楚）"
     }
 }
 
@@ -290,9 +378,9 @@ private fun ChoiceBlock(title: String, caption: String? = null, options: @Compos
     }
 }
 
-/** 點了開對話框或其他畫面的一列：標題、目前的值（重點色）、說明，右邊一個箭頭。 */
+/** 點了開對話框或其他畫面的一列：標題、目前的值（重點色）、說明，右邊一個箭頭（顏色設定在箭頭前多一個色點）。 */
 @Composable
-private fun SettingRow(title: String, value: String, caption: String? = null, onClick: () -> Unit) {
+private fun SettingRow(title: String, value: String, caption: String? = null, swatch: Color? = null, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -308,6 +396,10 @@ private fun SettingRow(title: String, value: String, caption: String? = null, on
             if (caption != null) Text(caption, style = TypeTok.caption, color = Tok.slate)
         }
         Spacer(Modifier.width(Tok.sXs))
+        if (swatch != null) {
+            Box(Modifier.size(28.dp).clip(CircleShape).background(swatch).border(1.dp, Tok.hairlineStrong, CircleShape))
+            Spacer(Modifier.width(Tok.sXs))
+        }
         AppIcon(R.drawable.ic_chevron_right, null, Tok.slate, 18.dp)
     }
 }

@@ -102,6 +102,7 @@ class CalendarRepository(private val context: Context) {
         status = if (c.isNull(9)) Events.STATUS_TENTATIVE else c.getInt(9),
         recurring = !c.getString(10).isNullOrBlank(),
         originalId = if (c.isNull(11)) null else c.getLong(11),
+        ownColor = !c.isNull(12),
     )
 
     fun eventDetail(id: Long): EventDetail? {
@@ -344,6 +345,7 @@ class CalendarRepository(private val context: Context) {
             Instances.EVENT_ID, Instances.BEGIN, Instances.END, Instances.TITLE, Instances.ALL_DAY,
             Instances.CALENDAR_ID, Instances.DISPLAY_COLOR, Instances.EVENT_LOCATION,
             Instances.SELF_ATTENDEE_STATUS, Instances.STATUS, Instances.RRULE, Instances.ORIGINAL_ID,
+            Instances.EVENT_COLOR,
         )
 
         private const val TAG = "CalendarRepo"

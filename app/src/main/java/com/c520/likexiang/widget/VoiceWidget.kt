@@ -26,6 +26,7 @@ import com.c520.likexiang.ui.theme.Tok
 /** 1×1 語音新增小工具（WID-03）：只有一個麥克風，按了直接用語音新增行程。沒有資料，不用更新。 */
 class VoiceWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        Widgets.usePalette(context)
         provideContent {
             Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Image(

@@ -290,9 +290,14 @@ fun EventChip(title: String, argb: Int, alarm: Boolean, modifier: Modifier = Mod
     }
 }
 
-/** 日曆勾選清單（左側選單與設定頁共用），依帳號分組。 */
+/** 日曆勾選清單（左側選單與設定頁共用），依帳號分組。有 [onColor] 時每列右邊多一個換顏色的按鈕（設定頁）。 */
 @Composable
-fun CalendarToggles(calendars: List<CalendarInfo>, hidden: Set<Long>, onToggle: (CalendarInfo, Boolean) -> Unit) {
+fun CalendarToggles(
+    calendars: List<CalendarInfo>,
+    hidden: Set<Long>,
+    onColor: ((CalendarInfo) -> Unit)? = null,
+    onToggle: (CalendarInfo, Boolean) -> Unit,
+) {
     if (calendars.isEmpty()) {
         Text("還沒有讀到日曆，請先允許讀取日曆。", style = TypeTok.caption, color = Tok.slate)
         return
@@ -316,7 +321,8 @@ fun CalendarToggles(calendars: List<CalendarInfo>, hidden: Set<Long>, onToggle: 
                 Spacer(Modifier.width(Tok.sXs))
                 Box(Modifier.size(10.dp).clip(CircleShape).background(Tok.eventColor(c.color)))
                 Spacer(Modifier.width(Tok.sXs))
-                Text(c.displayName, style = TypeTok.body, color = Tok.ink)
+                Text(c.displayName, style = TypeTok.body, color = Tok.ink, modifier = Modifier.weight(1f))
+                if (onColor != null) IconBtn(R.drawable.ic_palette, "換「${c.displayName}」的顏色", onClick = { onColor(c) }, tint = Tok.slate)
             }
         }
     }
